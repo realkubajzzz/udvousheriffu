@@ -70,6 +70,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
   
   // Initialize Supabase gallery loading for gallery page
   try { initSupabaseGallery && initSupabaseGallery(); } catch(e){ console.warn('Supabase gallery init failed', e); }
+  
+  // Initialize Supabase carousel loading for homepage
+  try { initSupabaseHomeCarousel && initSupabaseHomeCarousel(); } catch(e){ console.warn('Supabase home carousel init failed', e); }
 });
 
 // Fallback: if no Supabase configured, use local SSE endpoint at /server/status_sse.php
@@ -276,6 +279,65 @@ async function initSupabaseGallery(){
   }
 }
 
+// Load homepage carousel images from Supabase (max 15 images)
+async function initSupabaseHomeCarousel(){
+  const carouselTrack = document.getElementById('carTrack');
+  if(!carouselTrack) return; // not on homepage with carousel
+  
+  const cfg = window.SHERIFF_SUPABASE || {};
+  if(!cfg.url || !cfg.key) {
+    console.warn('Supabase not configured, carousel will use local images');
+    return;
+  }
+
+  const createClient = window.createClient || (window.supabase && window.supabase.createClient) || (window.Supabase && window.Supabase.createClient);
+  if(!createClient){
+    console.warn('Supabase client not found. Carousel will use local images.');
+    return;
+  }
+
+  const client = createClient(cfg.url, cfg.key);
+  
+  try{
+    // Fetch up to 15 gallery images ordered by created_at desc
+    const { data, error } = await client
+      .from('gallery')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(15);
+    
+    if(error) throw error;
+    
+    if(!data || data.length === 0){
+      console.warn('No Supabase images found, carousel will use local images');
+      return;
+    }
+    
+    // Clear existing carousel content and reset cloned flag
+    carouselTrack.innerHTML = '';
+    carouselTrack.dataset.cloned = 'false';
+    
+    // Create carousel images from Supabase
+    data.forEach((row, index) => {
+      const img = document.createElement('img');
+      img.src = row.url;
+      img.alt = row.caption || `Momentka ${index + 1}`;
+      carouselTrack.appendChild(img);
+    });
+    
+    console.info(`[sheriff] Loaded ${data.length} images from Supabase for homepage carousel`);
+    
+    // Re-initialize carousel cloning and autoplay since we changed the content
+    if(window.reinitializeCarousel) {
+      window.reinitializeCarousel();
+    }
+    
+  } catch(err) {
+    console.warn('Failed to load Supabase carousel images:', err);
+    // Keep existing local images as fallback
+  }
+}
+
 function handleContactSubmit(e){
   e.preventDefault();
   const form = e.target;
@@ -353,29 +415,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const track = document.getElementById('carTrack');
   if(!track) return;
 
+  let rafId = null;
+  let paused = false;
+  let originalCount = 0;
+  let originalWidth = 0;
+  const pixelsPerSecond = 100;
+
   // make all carousel images clickable for lightbox (works with ensureLightbox)
   function attachCarouselToLightbox(){
     const imgs = Array.from(track.querySelectorAll('img'));
     imgs.forEach(img=> img.classList.add('sheriff-carousel-img'));
   }
-  attachCarouselToLightbox();
 
-  // Duplicate content to allow seamless scroll
-  const children = Array.from(track.children);
-  if(children.length === 0) return;
-  // Wrap clones only if not already duplicated
-  if(!track.dataset.cloned){
-    children.forEach(node=> track.appendChild(node.cloneNode(true)));
-    track.dataset.cloned = 'true';
-  }
-
-  let rafId = null;
-  let paused = false;
-  // autoplay speed (increased). Tune this value to taste (px/sec)
-  const pixelsPerSecond = 100;
-
-  // Compute original width (sum of first N children where N=original count)
-  const originalCount = children.length;
   function getOriginalWidth(){
     let w = 0;
     for(let i=0;i<originalCount;i++){
@@ -385,59 +436,89 @@ document.addEventListener('DOMContentLoaded', ()=>{
     return w;
   }
 
-  let originalWidth = getOriginalWidth();
-  window.addEventListener('resize', ()=>{ originalWidth = getOriginalWidth(); });
+  function initializeCarousel(){
+    // Stop any running animation
+    if(rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    
+    attachCarouselToLightbox();
 
-  let lastTime = null;
-  function step(t){
-    if(paused){ lastTime = t; rafId = requestAnimationFrame(step); return; }
-    if(!lastTime) lastTime = t;
-    // clamp dt to avoid jumps when tab was backgrounded
-    let dt = (t - lastTime)/1000;
-    if(dt > 0.25) dt = 0.25;
-    lastTime = t;
-    const delta = pixelsPerSecond * dt;
-    // apply a tiny easing to smooth perceived motion (not required but helps)
-    track.scrollLeft += delta;
-    if(track.scrollLeft >= originalWidth){
-      track.scrollLeft -= originalWidth; // loop
+    // Duplicate content to allow seamless scroll
+    const children = Array.from(track.children);
+    if(children.length === 0) return;
+    
+    // Reset cloning if already cloned
+    if(track.dataset.cloned === 'true'){
+      // Remove cloned children (second half)
+      while(track.children.length > children.length / 2){
+        track.removeChild(track.lastChild);
+      }
+      track.dataset.cloned = 'false';
     }
-    rafId = requestAnimationFrame(step);
+    
+    // Clone children for infinite scroll
+    const originalChildren = Array.from(track.children);
+    originalCount = originalChildren.length;
+    originalChildren.forEach(node=> track.appendChild(node.cloneNode(true)));
+    track.dataset.cloned = 'true';
+
+    originalWidth = getOriginalWidth();
+    window.addEventListener('resize', ()=>{ originalWidth = getOriginalWidth(); });
+
+    let lastTime = null;
+    function step(t){
+      if(paused){ lastTime = t; rafId = requestAnimationFrame(step); return; }
+      if(!lastTime) lastTime = t;
+      // clamp dt to avoid jumps when tab was backgrounded
+      let dt = (t - lastTime)/1000;
+      if(dt > 0.25) dt = 0.25;
+      lastTime = t;
+      const delta = pixelsPerSecond * dt;
+      // apply a tiny easing to smooth perceived motion (not required but helps)
+      track.scrollLeft += delta;
+      if(track.scrollLeft >= originalWidth){
+        track.scrollLeft -= originalWidth; // loop
+      }
+      rafId = requestAnimationFrame(step);
+    }
+
+    function startAuto(){ if(!rafId){ lastTime = null; rafId = requestAnimationFrame(step); } }
+    function stopAuto(){ if(rafId){ cancelAnimationFrame(rafId); rafId = null; lastTime = null; } }
+
+    // Pause on hover and focusable children
+    track.addEventListener('mouseenter', ()=>{ paused = true; });
+    track.addEventListener('mouseleave', ()=>{ paused = false; });
+    track.addEventListener('focusin', ()=>{ paused = true; });
+    track.addEventListener('focusout', ()=>{ paused = false; });
+
+    // Manual controls should pause auto for a short time
+    const prev = document.getElementById('carPrev');
+    const next = document.getElementById('carNext');
+    let manualPauseTimer = null;
+    function manualPause(){ paused = true; clearTimeout(manualPauseTimer); manualPauseTimer = setTimeout(()=>{ paused = false; }, 1200); }
+    if(prev) prev.addEventListener('click', manualPause);
+    if(next) next.addEventListener('click', manualPause);
+
+    // Also allow dragging/scroll interactions to pause
+    let isDown = false; let startX=0; let scrollStart=0;
+    track.addEventListener('mousedown', (e)=>{ isDown=true; startX=e.pageX; scrollStart=track.scrollLeft; paused=true; });
+    window.addEventListener('mouseup', ()=>{ if(isDown){ isDown=false; manualPause(); }});
+    track.addEventListener('mousemove', (e)=>{ if(!isDown) return; const dx = e.pageX - startX; track.scrollLeft = scrollStart - dx; });
+
+    // Use event delegation on the track so cloned images (and future images) trigger lightbox
+    track.addEventListener('click', (e)=>{
+      const img = e.target.closest('img');
+      if(!img) return;
+      // Use the exposed helper
+      if(window.sheriffOpenLightbox) window.sheriffOpenLightbox(img.src, img.alt);
+    });
+
+    // start autoplay
+    startAuto();
   }
 
-  function startAuto(){ if(!rafId){ lastTime = null; rafId = requestAnimationFrame(step); } }
-  function stopAuto(){ if(rafId){ cancelAnimationFrame(rafId); rafId = null; lastTime = null; } }
+  // Expose reinitialize function for Supabase carousel loading
+  window.reinitializeCarousel = initializeCarousel;
 
-  // Pause on hover and focusable children
-  track.addEventListener('mouseenter', ()=>{ paused = true; });
-  track.addEventListener('mouseleave', ()=>{ paused = false; });
-  track.addEventListener('focusin', ()=>{ paused = true; });
-  track.addEventListener('focusout', ()=>{ paused = false; });
-
-  // Manual controls should pause auto for a short time
-  const prev = document.getElementById('carPrev');
-  const next = document.getElementById('carNext');
-  let manualPauseTimer = null;
-  function manualPause(){ paused = true; clearTimeout(manualPauseTimer); manualPauseTimer = setTimeout(()=>{ paused = false; }, 1200); }
-  if(prev) prev.addEventListener('click', manualPause);
-  if(next) next.addEventListener('click', manualPause);
-
-  // Also allow dragging/scroll interactions to pause
-  let isDown = false; let startX=0; let scrollStart=0;
-  track.addEventListener('mousedown', (e)=>{ isDown=true; startX=e.pageX; scrollStart=track.scrollLeft; paused=true; });
-  window.addEventListener('mouseup', ()=>{ if(isDown){ isDown=false; manualPause(); }});
-  track.addEventListener('mousemove', (e)=>{ if(!isDown) return; const dx = e.pageX - startX; track.scrollLeft = scrollStart - dx; });
-
-  // ensure lightbox picks up newly cloned images
-  // lightbox initializer attaches to .gallery images; also attach to carousel images here
-  // Use event delegation on the track so cloned images (and future images) trigger lightbox
-  track.addEventListener('click', (e)=>{
-    const img = e.target.closest('img');
-    if(!img) return;
-    // Use the exposed helper
-    if(window.sheriffOpenLightbox) window.sheriffOpenLightbox(img.src, img.alt);
-  });
-
-  // start autoplay
-  startAuto();
+  // Initialize carousel with existing content (local images)
+  initializeCarousel();
 });
