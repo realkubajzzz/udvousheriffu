@@ -1,9 +1,9 @@
--- Zjednodušená tabuľka pre menu obrázky (len obrázky, bez cien)
+-- Zjednodušená tabuľka pre menu obrázky (len URL linky)
 DROP TABLE IF EXISTS public.menu_images;
 
 CREATE TABLE IF NOT EXISTS public.menu_images (
   id bigserial primary key,
-  path text not null,                 -- cesta v Storage (napr. menu/steak.jpg) 
+  image_url text not null,            -- priamy URL link na obrázok (napr. https://imgur.com/abc123.jpg)
   caption text,                       -- názov jedla (voliteľné)
   created_at timestamptz default now()
 );

@@ -571,13 +571,8 @@ async function initSupabaseMenu(){
     // Create simple menu images
     data.forEach((row, index) => {
       const img = document.createElement('img');
-      // Handle both storage paths and full URLs
-      if(row.path.startsWith('http')) {
-        img.src = row.path; // Full URL
-      } else {
-        // Storage path - construct Supabase Storage URL
-        img.src = `${cfg.url}/storage/v1/object/public/gallery/${row.path}`;
-      }
+      // Use direct URL from database
+      img.src = row.image_url;
       img.alt = row.caption || `Menu obrázek ${index + 1}`;
       img.style.cursor = 'pointer';
       
