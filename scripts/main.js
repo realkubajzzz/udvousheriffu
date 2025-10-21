@@ -203,6 +203,9 @@ async function initSupabaseGallery(){
   const galleryContainer = document.querySelector('.gallery');
   if(!galleryContainer) return; // not on gallery page
   
+  // Only load from Supabase if we're on the actual gallery page (has loading-gallery element)
+  if(!document.querySelector('.loading-gallery')) return;
+  
   const cfg = window.SHERIFF_SUPABASE || {};
   if(!cfg.url || !cfg.key) {
     console.warn('Supabase not configured, gallery will remain empty');
