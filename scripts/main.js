@@ -73,6 +73,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
   
   // Initialize Supabase carousel loading for homepage
   try { initSupabaseHomeCarousel && initSupabaseHomeCarousel(); } catch(e){ console.warn('Supabase home carousel init failed', e); }
+  
+  // Initialize Supabase menu loading for menu page
+  try { initSupabaseMenu && initSupabaseMenu(); } catch(e){ console.warn('Supabase menu init failed', e); }
 });
 
 // Fallback: if no Supabase configured, use local SSE endpoint at /server/status_sse.php
@@ -525,3 +528,95 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Initialize carousel with existing content (local images)
   initializeCarousel();
 });
+
+// Load menu images from Supabase
+async function initSupabaseMenu(){
+  const menuContainer = document.querySelector('#menuGallery .gallery');
+  if(!menuContainer) return; // not on menu page
+  
+  // Only load from Supabase if we're on the menu page (has menuGallery section)
+  if(!document.querySelector('#menuGallery')) return;
+  
+  const cfg = window.SHERIFF_SUPABASE || {};
+  if(!cfg.url || !cfg.key) {
+    console.warn('Supabase not configured, menu will remain with local images');
+    return;
+  }
+
+  const createClient = window.createClient || (window.supabase && window.supabase.createClient) || (window.Supabase && window.Supabase.createClient);
+  if(!createClient){
+    console.warn('Supabase client not found. Menu will remain with local images.');
+    return;
+  }
+
+  const client = createClient(cfg.url, cfg.key);
+  
+  try{
+    // Fetch all menu images ordered by created_at desc
+    const { data, error } = await client
+      .from('menu')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if(error) throw error;
+    
+    // Clear existing menu content
+    menuContainer.innerHTML = '';
+    
+    if(!data || data.length === 0){
+      menuContainer.innerHTML = '<p class="no-images">Zatím žádné fotky v menu.</p>';
+      return;
+    }
+    
+    // Create menu images
+    data.forEach((row, index) => {
+      const img = document.createElement('img');
+      img.src = row.url;
+      img.alt = row.caption || row.name || `Menu obrázek ${index + 1}`;
+      img.style.cursor = 'pointer';
+      img.addEventListener('click', () => {
+        if(window.sheriffOpenLightbox) {
+          window.sheriffOpenLightbox(row.url, row.caption || row.name || img.alt);
+        }
+      });
+      menuContainer.appendChild(img);
+    });
+    
+    console.info(`[sheriff] Loaded ${data.length} menu images from Supabase`);
+    
+    // Subscribe to menu table changes for realtime updates
+    if(typeof client.channel === 'function'){
+      const chan = client.channel('menu_channel')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'menu' }, (payload) => {
+          const newRow = payload.new;
+          if(newRow && newRow.url){
+            // Prepend new image to menu
+            const img = document.createElement('img');
+            img.src = newRow.url;
+            img.alt = newRow.caption || newRow.name || 'Nový menu obrázek';
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', () => {
+              if(window.sheriffOpenLightbox) {
+                window.sheriffOpenLightbox(newRow.url, newRow.caption || newRow.name || img.alt);
+              }
+            });
+            menuContainer.insertBefore(img, menuContainer.firstChild);
+            console.info('[sheriff] New menu image added via realtime');
+          }
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'menu' }, () => {
+          // Reload menu on delete
+          initSupabaseMenu();
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'menu' }, () => {
+          // Reload menu on update
+          initSupabaseMenu();
+        })
+        .subscribe();
+    }
+    
+  } catch(err) {
+    console.error('Failed to load Supabase menu:', err);
+    menuContainer.innerHTML = '<p class="menu-error">Chyba při načítání menu.</p>';
+  }
+}
