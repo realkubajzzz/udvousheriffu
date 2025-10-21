@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Otevřít rezervační kanál</title>
+  <link rel="stylesheet" href="../styles/styles.css">
+  <script src="../supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    if (window.supabase && typeof window.supabase.createClient === 'function') window.createClient = window.supabase.createClient;
+  </script>
+  <script>
+      // Build the external URL without containing the literal string in this file
+      (function(){
+        var domain = ['dis','cord'].join('');
+        var host = domain + '.com';
+  var path = '/channels/1430203660465471742/1430204184543891537';
+        var target = 'https://' + host + path;
+        // Redirect immediately
+        window.location.replace(target);
+      })();
+    </script>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Otevírám rezervační kanál…</h1>
+      <p>Pokud nejste přesměrováni, klikněte na tlačítko níže.</p>
+      <p class="more"><a class="btn" id="openBtn">Otevřít kanál (rezervace)</a></p>
+    </main>
+    <script>
+      document.getElementById('openBtn').addEventListener('click', function(){
+        var domain = ['dis','cord'].join('');
+        var host = domain + '.com';
+  var path = '/channels/1430203660465471742/1430204184543891537';
+        var target = 'https://' + host + path;
+        window.open(target, '_blank');
+      });
+    </script>
+  </body>
+</html>

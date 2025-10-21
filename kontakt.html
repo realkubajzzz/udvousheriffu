@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kontakt — U Dvou Sheriffů</title>
+  <link rel="stylesheet" href="styles/styles.css">
+  <script src="/supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    if (window.supabase && typeof window.supabase.createClient === 'function') window.createClient = window.supabase.createClient;
+  </script>
+  <script defer src="scripts/main.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.html">
+          <img src="assets/logo.png" alt="U Dvou Sheriffů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
+          <span class="brand-text">U Dvou Sheriffů</span>
+        </a>
+        
+        <nav class="nav">
+          <a href="index.html">Domov</a>
+          <a href="menu.html">Menu</a>
+          <a href="akcie.html">Akce</a>
+          <a href="rezervace.html">Rezervace</a>
+          <a href="kontakt.html" class="active">Kontakt</a>
+          <a href="about.html">O nás</a>
+          <a href="galeria.html">Galerie</a>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="contact-grid reveal">
+        <div class="card">
+          <h3>Adresa</h3>
+          <p>Panorama Drive, Sandy Shores</p>
+          <h3>Telefon</h3>
+          <p><a href="tel:+420638654405">638 654 405</a></p>
+          <h3>E-mail</h3>
+          <p><a href="mailto:pearce.aiden@gmail.com">pearce.aiden@gmail.com</a></p>
+          <h3>Rezervace</h3>
+          <p>Pro rezervace použijte prosím náš rezervační kanál: <a href="redirects/rezervace.html" target="_blank" rel="noopener">Kontaktní formulář</a></p>
+        </div>
+
+        <div class="card">
+          <h3>Kde nás najdete</h3>
+          <p class="note">Naleznete nás na Panorama Drive, při vjezdu do Sandy Shores.</p>
+          <div style="margin-top:12px;">
+            <img src="assets/location.png" alt="Mapa polohy - U Dvou Sheriffů" style="width:100%;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.06)">
+            <p class="note" style="margin-top:8px">Pokud potřebujete přesnou navigaci kontaktujte nás skrz telefon / e-mail.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <small>© U Dvou Sheriffů</small>
+        <div class="footer-links">
+          <a href="redirects/rezervace.html" target="_blank" rel="noopener">Rezervace</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

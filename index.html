@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>U Dvou Sheriffů</title>
+  <link rel="stylesheet" href="styles/styles.css">
+  <script src="/supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+      window.createClient = window.supabase.createClient;
+    }
+  </script>
+  <script defer src="scripts/main.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+  <a class="brand" href="index.html">
+          <img src="assets/logo.png" alt="U Dvou Sheriffů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
+          <span class="brand-text">U Dvou Sheriffů</span>
+        </a>
+        <nav class="nav" id="nav">
+          <a href="index.html">Domov</a>
+          <a href="menu.html">Menu</a>
+          <a href="akcie.html">Akcie</a>
+          <a href="rezervace.html">Rezervace</a>
+          <a href="kontakt.html">Kontakt</a>
+          <a href="about.html">O nás</a>
+          <a href="galeria.html">Galerie</a>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container">
+          <h1>Vítejte v restauraci U Dvou Sheriffů</h1>
+          <p class="sub">Čistý design, poctivá kuchyně a příjemná atmosféra v centru města.</p>
+          <p class="hero-cta"><a class="btn" href="menu.html">Prohlédnout menu</a> <a class="btn ghost" href="redirects/rezervace.html" target="_blank" rel="noopener">Rezervovat stůl</a></p>
+        </div>
+      </section>
+      
+      <section class="carousel-section container reveal" aria-label="Fotogalerie - rychlý přehled">
+        <h2>Okamžiky z hospody</h2>
+        <div class="carousel" id="homeCarousel">
+          <button class="car-btn left" id="carPrev" aria-label="Předchozí">◀</button>
+          <div class="car-track" id="carTrack">
+            <!-- HOMEGALLERY:START -->
+            <img src="assets/images/home/20251015_230947.png" alt="Momentka 1">
+            <img src="assets/images/home/FiveM_by_Cfx.re_18._10._2025_21_09_56.png" alt="Momentka 2">
+            <img src="assets/images/home/Snimka_obrazovky_1240.png" alt="Momentka 3">
+            <img src="assets/images/home/Snimka_obrazovky_2025-10-15_215945.png" alt="Momentka 4">
+            <img src="assets/images/home/fdsfsdfd.png" alt="Momentka 5">
+            <img src="assets/images/home/image-4.png" alt="Momentka 6">
+            <img src="assets/images/home/image.png" alt="Momentka 7">
+            <img src="assets/images/home/wewe.png" alt="Momentka 8">
+            <!-- HOMEGALLERY:END -->
+          </div>
+          <button class="car-btn right" id="carNext" aria-label="Další">▶</button>
+        </div>
+      </section>
+
+      <!-- carousel moved below Aktuální akce -->
+
+      <section class="features container">
+        <article class="card reveal">
+          <h3>Sezónní suroviny</h3>
+          <p>Lokální a čerstvé suroviny připravené s respektem k chutím.</p>
+        </article>
+        <article class="card reveal">
+          <h3>Elegantní prostředí</h3>
+          <p>Minimalistický interiér, který nechá vyniknout jídlo.</p>
+        </article>
+        <article class="card reveal">
+          <h3>Přátelský servis</h3>
+          <p>Osobní přístup a doporučení od zkušeného týmu.</p>
+        </article>
+      </section>
+
+      <section class="specials container reveal">
+        <h2>Aktuální akce</h2>
+        <div class="grid">
+          <div class="media">
+            <div class="media-img" aria-hidden="true"></div>
+            <div>
+              <h4>Rychlé obědy</h4>
+              <p>Po-Pá 11:00–14:00 — speciální menu za zvýhodněné ceny.</p>
+            </div>
+          </div>
+          <div class="media">
+            <div class="media-img small" aria-hidden="true"></div>
+            <div>
+              <h4>Degustační večery</h4>
+              <p>Rezervace pro menší skupiny — menu na vyžádání.</p>
+            </div>
+          </div>
+        </div>
+  <p class="more"><a href="akcie.html">Více o akcích →</a></p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <small>© U Dvou Sheriffů — všechny práva vyhrazena</small>
+        <div class="footer-links">
+          <a href="kontakt.html">Kontakt</a>
+          <a href="about.html">O nás</a>
+          <a href="redirects/rezervace.html" target="_blank" rel="noopener">Rezervace</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

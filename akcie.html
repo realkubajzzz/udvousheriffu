@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Akcie — U Dvou Sheriffů</title>
+  <link rel="stylesheet" href="styles/styles.css">
+  <script src="/supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    if (window.supabase && typeof window.supabase.createClient === 'function') window.createClient = window.supabase.createClient;
+  </script>
+  <script defer src="scripts/main.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.html">
+          <img src="assets/logo.png" alt="U Dvou Sheriffů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
+          <span class="brand-text">U Dvou Sheriffů</span>
+        </a>
+        
+        <nav class="nav">
+          <a href="index.html">Domov</a>
+          <a href="menu.html">Menu</a>
+          <a href="akcie.html" class="active">Akce</a>
+          <a href="rezervace.html">Rezervace</a>
+          <a href="kontakt.html">Kontakt</a>
+          <a href="about.html">O nás</a>
+            <a href="galeria.html">Galerie</a>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <h1>Akce — Udalosti, Slevy a Šťastné hodiny</h1>
+      <p class="lead reveal">Tady najdete nadcházející události, časově omezené slevy a informace o šťastných hodinách.</p>
+
+      <section id="eventsContainer" class="reveal">
+        <h2>Nadcházející události</h2>
+        <ul class="events-list">
+          <li><strong>Degustační večer: 12. listopadu</strong>
+            <p>Speciální 5chodové menu s párováním vín. Kapacita omezena, rezervace nutná.</p>
+          </li>
+          <li><strong>Živá hudba v sobotu</strong>
+            <p>Živá kapela hraje od 19:00 — volné vstupné, rezervace doporučena.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="promotions reveal">
+        <h2>Aktuální slevy & Šťastné hodiny</h2>
+        <div class="cards-grid">
+          <article class="promo">
+            <h3>Polední menu</h3>
+            <p>2 chody + polévka za 199 Kč (Po–Pá 11:00–14:00).</p>
+          </article>
+          <article class="promo">
+            <h3>Sleva pro studenty</h3>
+            <p>10% sleva na předložení ISIC karty.</p>
+          </article>
+          <article class="promo">
+            <h3>Šťastné hodiny</h3>
+            <p>Každý den 16:00–18:00 — vybrané nápoje za zvýhodněné ceny.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="allergens" class="reveal">
+        <h2>Alergeny / Disclaimer</h2>
+        <p>Jídla mohou obsahovat alergeny. Kompletní seznam alergenních látek je k dispozici na vyžádání u obsluhy.</p>
+      </section>
+    </main>
+
+    <script>
+      async function loadEvents(){
+        try{
+          const res = await fetch('/api/events');
+          if(!res.ok) throw new Error('no api');
+          const evs = await res.json();
+          const container = document.getElementById('eventsContainer');
+          if(!evs.length) container.innerHTML = '<p>Momentálně žádné naplánované akce.</p>';
+          else{
+            container.innerHTML = '';
+            evs.forEach(e=>{
+              const el = document.createElement('div'); el.className='card';
+              el.innerHTML = `<h3>${e.title||''} <small>${e.date||''}</small></h3><p>${e.description||''}</p>`;
+              container.appendChild(el);
+            })
+          }
+        }catch(e){
+          document.getElementById('eventsContainer').innerHTML = '<p>Nelze načíst data z CMS — zkontrolujte admin.</p>';
+        }
+      }
+      loadEvents();
+    </script>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <small>© U Dvou Sheriffů</small>
+        <div class="footer-links"></div>
+      </div>
+    </footer>
+  </body>
+</html>

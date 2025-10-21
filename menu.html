@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Menu — U Dvou Sheriffů</title>
+  <link rel="stylesheet" href="styles/styles.css">
+  <script src="/supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    if (window.supabase && typeof window.supabase.createClient === 'function') window.createClient = window.supabase.createClient;
+  </script>
+  <script defer src="scripts/main.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+  <a class="brand" href="index.html">
+          <img src="assets/logo.png" alt="U Dvou Sheriffů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
+          <span class="brand-text">U Dvou Sheriffů</span>
+        </a>
+        
+        <nav class="nav">
+          <a href="index.html">Domov</a>
+          <a href="menu.html" class="active">Menu</a>
+          <a href="akcie.html">Akce</a>
+          <a href="rezervace.html">Rezervace</a>
+          <a href="kontakt.html">Kontakt</a>
+          <a href="about.html">O nás</a>
+           <a href="galeria.html">Galerie</a>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
+      </div>
+    </header>
+
+    <main class="container">
+    <h1>Menu</h1>
+  <p class="lead reveal">Prohlédněte si naše pokrmy — pokud chcete rezervovat stůl, prosím využijte náš rezervační kanál (odkaz v zápatí a na stránce Kontakt).</p>
+
+      <section id="menuGallery" class="reveal">
+        <div class="gallery">
+          <img src="assets/images/menu1.png" alt="Hlavní chod — U Dvou Sheriffů">
+          <img src="assets/images/menu1.png" alt="Delikatesa šéfkuchaře">
+          <img src="assets/images/menu1.png" alt="Grilované speciality">
+          <img src="assets/images/menu1.png" alt="Dezerty a dobroty">
+        </div>
+      </section>
+
+      <section class="menu-section reveal" id="allergens">
+        <h2>Alergeny / Upozornění</h2>
+        <p>Upozornění: Naše pokrmy mohou obsahovat alergeny (obiloviny obsahující lepek, vejce, ryby, podzemnice olejná, sóju, mléko, ořechy, apod.).</p>
+        <p>Pokud máte potravinové alergie nebo intolerance, informujte prosím obsluhu před objednáním. Kompletní seznam alergenních složek je k dispozici na vyžádání.</p>
+      </section>
+    
+      <!-- lightbox overlay -->
+      <div id="lightbox" class="lightbox-overlay" aria-hidden="true">
+        <button id="lightboxClose" class="lightbox-close">✕</button>
+        <img id="lightboxImg" class="lightbox-img" src="" alt="">
+      </div>
+    </main>
+
+    <!-- Lightbox handled by /scripts/main.js -->
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <small>© U Dvou Sheriffů</small>
+        <div class="footer-links">
+          <a href="redirects/rezervace.html" target="_blank" rel="noopener">Rezervace</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

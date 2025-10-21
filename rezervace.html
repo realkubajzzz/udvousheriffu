@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rezervace — U Dvou Sheriffů</title>
+  <!-- No automatic redirect: page provides manual link to open the reservation channel -->
+  <link rel="stylesheet" href="styles/styles.css">
+  <script src="/supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    if (window.supabase && typeof window.supabase.createClient === 'function') window.createClient = window.supabase.createClient;
+  </script>
+  <script defer src="scripts/main.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.html">
+          <img src="assets/logo.png" alt="U Dvou Sheriffů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
+          <span class="brand-text">U Dvou Sheriffů</span>
+        </a>
+        
+        <nav class="nav">
+          <a href="index.html">Domov</a>
+          <a href="menu.html">Menu</a>
+          <a href="akcie.html">Akce</a>
+          <a href="rezervace.html" class="active">Rezervace</a>
+          <a href="kontakt.html">Kontakt</a>
+          <a href="about.html">O nás</a>
+          <a href="galeria.html">Galerie</a>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <h1>Rezervace</h1>
+  <p class="lead reveal">Pro rezervace použíjte náš rezervační kanál — otevřete ho ručně pomocí tlačítka níže.</p>
+
+      <section class="reveal">
+        <div class="card">
+          <h3>Rezervace online</h3>
+          <p>Pro rychlou rezervaci otevřete náš rezervační kanál a otevřete si ticket na rezervaci.</p>
+          <p class="more"><a class="btn" href="redirects/rezervace.html" target="_blank" rel="noopener">Otevřít kanál (rezervace)</a></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <small>© U Dvou Sheriffů</small>
+        <div class="footer-links"></div>
+      </div>
+    </footer>
+  </body>
+</html>
