@@ -554,7 +554,7 @@ async function initSupabaseMenu(){
   try{
     // Fetch all menu images ordered by created_at desc
     const { data, error } = await client
-      .from('menu')
+      .from('menu_images')
       .select('*')
       .order('created_at', { ascending: false });
     
@@ -568,47 +568,43 @@ async function initSupabaseMenu(){
       return;
     }
     
-    // Create menu images
+    // Create simple menu images
     data.forEach((row, index) => {
       const img = document.createElement('img');
-      img.src = row.url;
-      img.alt = row.caption || row.name || `Menu obrázek ${index + 1}`;
+      // Handle both storage paths and full URLs
+      if(row.path.startsWith('http')) {
+        img.src = row.path; // Full URL
+      } else {
+        // Storage path - construct Supabase Storage URL
+        img.src = `${cfg.url}/storage/v1/object/public/gallery/${row.path}`;
+      }
+      img.alt = row.caption || `Menu obrázek ${index + 1}`;
       img.style.cursor = 'pointer';
+      
+      // Click handler for lightbox
       img.addEventListener('click', () => {
         if(window.sheriffOpenLightbox) {
-          window.sheriffOpenLightbox(row.url, row.caption || row.name || img.alt);
+          window.sheriffOpenLightbox(img.src, row.caption || img.alt);
         }
       });
+      
       menuContainer.appendChild(img);
     });
     
     console.info(`[sheriff] Loaded ${data.length} menu images from Supabase`);
     
-    // Subscribe to menu table changes for realtime updates
+    // Subscribe to menu_images table changes for realtime updates
     if(typeof client.channel === 'function'){
-      const chan = client.channel('menu_channel')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'menu' }, (payload) => {
-          const newRow = payload.new;
-          if(newRow && newRow.url){
-            // Prepend new image to menu
-            const img = document.createElement('img');
-            img.src = newRow.url;
-            img.alt = newRow.caption || newRow.name || 'Nový menu obrázek';
-            img.style.cursor = 'pointer';
-            img.addEventListener('click', () => {
-              if(window.sheriffOpenLightbox) {
-                window.sheriffOpenLightbox(newRow.url, newRow.caption || newRow.name || img.alt);
-              }
-            });
-            menuContainer.insertBefore(img, menuContainer.firstChild);
-            console.info('[sheriff] New menu image added via realtime');
-          }
+      const chan = client.channel('menu_images_channel')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'menu_images' }, () => {
+          // Reload menu on any change to maintain proper sorting
+          initSupabaseMenu();
         })
-        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'menu' }, () => {
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'menu_images' }, () => {
           // Reload menu on delete
           initSupabaseMenu();
         })
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'menu' }, () => {
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'menu_images' }, () => {
           // Reload menu on update
           initSupabaseMenu();
         })
