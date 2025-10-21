@@ -67,6 +67,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
   try { initSupabaseStatusRealtime && initSupabaseStatusRealtime(el); } catch(e){ console.warn('Supabase realtime init failed', e); }
   // re-evaluate every 30 seconds
   setInterval(()=> setSiteStatus(el), 30000);
+  
+  // Initialize Supabase gallery loading for gallery page
+  try { initSupabaseGallery && initSupabaseGallery(); } catch(e){ console.warn('Supabase gallery init failed', e); }
 });
 
 // Fallback: if no Supabase configured, use local SSE endpoint at /server/status_sse.php
@@ -190,6 +193,87 @@ async function initSupabaseStatusRealtime(el){
       window.__sheriff_supabase_poll = setInterval(poll, 8000);
     }
   }catch(e){ console.warn('Supabase subscription init failed', e); }
+}
+
+// Load gallery images from Supabase
+async function initSupabaseGallery(){
+  const galleryContainer = document.querySelector('.gallery');
+  if(!galleryContainer) return; // not on gallery page
+  
+  const cfg = window.SHERIFF_SUPABASE || {};
+  if(!cfg.url || !cfg.key) {
+    console.warn('Supabase not configured, gallery will remain empty');
+    return;
+  }
+
+  const createClient = window.createClient || (window.supabase && window.supabase.createClient) || (window.Supabase && window.Supabase.createClient);
+  if(!createClient){
+    console.warn('Supabase client not found. Gallery will remain empty.');
+    return;
+  }
+
+  const client = createClient(cfg.url, cfg.key);
+  
+  try{
+    // Fetch all gallery images ordered by created_at desc
+    const { data, error } = await client
+      .from('gallery')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if(error) throw error;
+    
+    // Clear existing gallery content
+    galleryContainer.innerHTML = '';
+    
+    if(!data || data.length === 0){
+      galleryContainer.innerHTML = '<p class="no-images">Zatím žádné fotky v galerii.</p>';
+      return;
+    }
+    
+    // Create gallery images
+    data.forEach((row, index) => {
+      const img = document.createElement('img');
+      img.src = row.url;
+      img.alt = row.caption || `Galerie obrázek ${index + 1}`;
+      img.style.cursor = 'pointer';
+      img.addEventListener('click', () => {
+        if(window.sheriffOpenLightbox) {
+          window.sheriffOpenLightbox(row.url, row.caption || img.alt);
+        }
+      });
+      galleryContainer.appendChild(img);
+    });
+    
+    console.info(`[sheriff] Loaded ${data.length} images from Supabase gallery`);
+    
+    // Subscribe to new gallery inserts for realtime updates
+    if(typeof client.channel === 'function'){
+      const chan = client.channel('gallery_channel')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'gallery' }, (payload) => {
+          const newRow = payload.new;
+          if(newRow && newRow.url){
+            // Prepend new image to gallery
+            const img = document.createElement('img');
+            img.src = newRow.url;
+            img.alt = newRow.caption || 'Nový obrázek';
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', () => {
+              if(window.sheriffOpenLightbox) {
+                window.sheriffOpenLightbox(newRow.url, newRow.caption || img.alt);
+              }
+            });
+            galleryContainer.insertBefore(img, galleryContainer.firstChild);
+            console.info('[sheriff] New gallery image added via realtime');
+          }
+        })
+        .subscribe();
+    }
+    
+  } catch(err) {
+    console.error('Failed to load Supabase gallery:', err);
+    galleryContainer.innerHTML = '<p class="gallery-error">Chyba při načítání galerie.</p>';
+  }
 }
 
 function handleContactSubmit(e){
