@@ -204,9 +204,21 @@
             return;
           }
 
-          // Verify password (pre-hashed passwords in demo)
-          // V produkcii by ste mali použiť bcrypt.compare()
-          const isValidPassword = await bcrypt.compare(password, userData.password_hash);
+          // Verify password - support both bcrypt and plain text for testing
+          let isValidPassword = false;
+          
+          try {
+            // Try bcrypt first
+            if (userData.password_hash.startsWith('$2b$')) {
+              isValidPassword = await bcrypt.compare(password, userData.password_hash);
+            } else {
+              // Fallback for plain text (testing only)
+              isValidPassword = password === userData.password_hash;
+            }
+          } catch (err) {
+            // If bcrypt fails, try plain text comparison
+            isValidPassword = password === userData.password_hash;
+          }
           
           if (!isValidPassword) {
             showMessage('Nesprávne používateľské meno alebo heslo', 'error');

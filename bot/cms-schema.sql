@@ -121,16 +121,29 @@ CREATE INDEX IF NOT EXISTS cms_sessions_token_idx ON public.cms_sessions (sessio
 CREATE INDEX IF NOT EXISTS cms_sessions_expires_idx ON public.cms_sessions (expires_at);
 CREATE INDEX IF NOT EXISTS cms_actions_active_idx ON public.cms_actions (is_active, start_date, end_date);
 
--- 8. Vytvor default admin používateľa (heslo: admin123)
--- POZOR: Zmeňte heslo po prvom prihlásení!
+-- 8. Vytvor default CMS používateľov
+-- POZOR: Zmeňte heslá po prvom prihlásení!
 INSERT INTO public.cms_users (username, password_hash, email, role, is_active) 
-VALUES (
-  'admin', 
-  '$2b$10$rBV2HnZ7vCjpQGVJT9QkWe3XkOROQ/nHQ/UaBf1DYa6L7YH.xFq8m', -- admin123
-  'admin@udvousheriffu.sk', 
-  'admin', 
-  true
-) ON CONFLICT (username) DO NOTHING;
+VALUES 
+  (
+    'admin', 
+    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- admin123 (bcrypt)
+    'admin@udvousheriffu.sk', 
+    'admin', 
+    true
+  ),
+  (
+    'editor', 
+    '$2a$10$Ez4WjPywwjumEe26m8BfTOC5fCV/e52nbCOF3uJKdD.49ByamArI.', -- editor456 (bcrypt)
+    'editor@udvousheriffu.sk', 
+    'editor', 
+    true
+  )
+ON CONFLICT (username) DO UPDATE SET 
+  password_hash = EXCLUDED.password_hash,
+  email = EXCLUDED.email,
+  role = EXCLUDED.role,
+  is_active = EXCLUDED.is_active;
 
 -- 9. Funkcia pre čistenie expired sessions
 CREATE OR REPLACE FUNCTION clean_expired_cms_sessions()
