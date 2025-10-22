@@ -1,422 +1,506 @@
-// CMS JavaScript s autentifikáciou
-let cmsSupabase = null;
+// CMS JavaScript Functions for U Dvou Sheriffů
+// Handles authentication, CRUD operations, and UI interactions
+
+let supabaseClient = null;
 let currentUser = null;
 
-// Inicializácia
-document.addEventListener('DOMContentLoaded', () => {
-    initSupabase();
-    checkSession();
-    setupEventListeners();
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  initCMS();
 });
 
-function initSupabase() {
-    const cfg = window.SHERIFF_SUPABASE || {};
-    if (!cfg.url || !cfg.key) {
-        showError('Supabase nie je nakonfigurované');
-        return;
-    }
-
+async function initCMS() {
+  // Initialize Supabase client
+  if (window.SHERIFF_SUPABASE && window.SHERIFF_SUPABASE.url && window.SHERIFF_SUPABASE.key) {
     const createClient = window.createClient || (window.supabase && window.supabase.createClient);
-    if (!createClient) {
-        showError('Supabase klient nie je dostupný');
-        return;
+    if (createClient) {
+      supabaseClient = createClient(window.SHERIFF_SUPABASE.url, window.SHERIFF_SUPABASE.key);
     }
+  }
 
-    cmsSupabase = createClient(cfg.url, cfg.key);
-    console.log('[CMS] Supabase inicializované');
+  if (!supabaseClient) {
+    showMessage('error', 'Supabase nie je nakonfigurovaný');
+    return;
+  }
+
+  // Check authentication
+  const isAuthenticated = await checkAuthentication();
+  if (!isAuthenticated) {
+    window.location.href = 'logincms.html';
+    return;
+  }
+
+  // Initialize forms
+  setupForms();
+  
+  // Load initial data
+  loadGalleryItems();
+  loadMenuItems();
+  loadActionsItems();
 }
 
-function setupEventListeners() {
-    // Login form
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
+async function checkAuthentication() {
+  const sessionToken = localStorage.getItem('cms_session_token');
+  const userId = localStorage.getItem('cms_user_id');
+  const username = localStorage.getItem('cms_username');
+
+  if (!sessionToken || !userId) {
+    return false;
+  }
+
+  try {
+    // Verify session in database
+    const { data, error } = await supabaseClient
+      .from('cms_sessions')
+      .select('id, expires_at, user_id')
+      .eq('session_token', sessionToken)
+      .eq('user_id', userId)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+
+    if (error || !data) {
+      // Invalid session
+      localStorage.removeItem('cms_session_token');
+      localStorage.removeItem('cms_user_id');
+      localStorage.removeItem('cms_username');
+      return false;
     }
 
-    // Logout button  
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
-    }
-}
-
-// Session management
-function checkSession() {
-    const session = localStorage.getItem('sheriff_cms_session');
-    if (session) {
-        try {
-            const userData = JSON.parse(session);
-            if (userData.expires > Date.now()) {
-                loginSuccess(userData);
-                return;
-            }
-        } catch (e) {
-            console.warn('[CMS] Neplatná session');
-        }
-    }
-    showLoginScreen();
-}
-
-function saveSession(userData) {
-    const sessionData = {
-        ...userData,
-        expires: Date.now() + (8 * 60 * 60 * 1000) // 8 hodín
+    // Set current user info
+    currentUser = {
+      id: userId,
+      username: username
     };
-    localStorage.setItem('sheriff_cms_session', JSON.stringify(sessionData));
+
+    // Update UI
+    document.getElementById('currentUser').textContent = `Prihlásený: ${username}`;
+    
+    return true;
+  } catch (err) {
+    console.error('Authentication check failed:', err);
+    return false;
+  }
 }
 
-function clearSession() {
-    localStorage.removeItem('sheriff_cms_session');
-}
-
-// Login handling
-async function handleLogin(e) {
+function setupForms() {
+  // Gallery form
+  document.getElementById('galleryForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    await addGalleryItem();
+  });
+
+  // Menu form
+  document.getElementById('menuForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    await addMenuItem();
+  });
+
+  // Actions form
+  document.getElementById('actionsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    await addAction();
+  });
+}
+
+// Tab switching
+function showTab(tabName) {
+  // Update tab buttons
+  document.querySelectorAll('.cms-tab').forEach(tab => tab.classList.remove('active'));
+  event.target.classList.add('active');
+
+  // Update panels
+  document.querySelectorAll('.cms-panel').forEach(panel => panel.classList.remove('active'));
+  document.getElementById(`${tabName}-panel`).classList.add('active');
+}
+
+// Gallery functions
+async function addGalleryItem() {
+  const url = document.getElementById('galleryUrl').value.trim();
+  const caption = document.getElementById('galleryCaption').value.trim();
+
+  if (!url) {
+    showMessage('error', 'URL obrázka je povinné', 'galleryMessage');
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('gallery')
+      .insert({
+        url: url,
+        caption: caption || null,
+        created_by: currentUser.id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    showMessage('success', 'Obrázok bol úspešne pridaný do galérie', 'galleryMessage');
+    document.getElementById('galleryForm').reset();
+    loadGalleryItems();
+  } catch (err) {
+    console.error('Error adding gallery item:', err);
+    showMessage('error', 'Chyba pri pridávaní obrázka: ' + err.message, 'galleryMessage');
+  }
+}
+
+async function loadGalleryItems() {
+  const loadingEl = document.getElementById('galleryLoading');
+  const itemsEl = document.getElementById('galleryItems');
+  
+  loadingEl.style.display = 'block';
+  itemsEl.innerHTML = '';
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('gallery')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    loadingEl.style.display = 'none';
     
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
+    if (data && data.length > 0) {
+      data.forEach(item => {
+        itemsEl.appendChild(createGalleryItemCard(item));
+      });
+    } else {
+      itemsEl.innerHTML = '<p>Žiadne obrázky v galérii</p>';
+    }
+  } catch (err) {
+    console.error('Error loading gallery:', err);
+    loadingEl.style.display = 'none';
+    itemsEl.innerHTML = '<p>Chyba pri načítavaní galérie</p>';
+  }
+}
+
+function createGalleryItemCard(item) {
+  const card = document.createElement('div');
+  card.className = 'item-card';
+  
+  card.innerHTML = `
+    <img src="${item.url}" alt="${item.caption || 'Gallery image'}" class="item-image" onerror="this.src='assets/logo.png'">
+    <h4>${item.caption || 'Bez popisu'}</h4>
+    <p><small>Pridané: ${new Date(item.created_at).toLocaleDateString('sk-SK')}</small></p>
+    <div class="item-actions">
+      <button class="btn btn-danger" onclick="deleteGalleryItem('${item.id}')">Zmazať</button>
+    </div>
+  `;
+  
+  return card;
+}
+
+async function deleteGalleryItem(itemId) {
+  if (!confirm('Naozaj chcete zmazať tento obrázok z galérie?')) return;
+
+  try {
+    const { error } = await supabaseClient
+      .from('gallery')
+      .delete()
+      .eq('id', itemId);
+
+    if (error) throw error;
+
+    showMessage('success', 'Obrázok bol zmazaný z galérie', 'galleryMessage');
+    loadGalleryItems();
+  } catch (err) {
+    console.error('Error deleting gallery item:', err);
+    showMessage('error', 'Chyba pri mazaní obrázka: ' + err.message, 'galleryMessage');
+  }
+}
+
+// Menu functions
+async function addMenuItem() {
+  const url = document.getElementById('menuUrl').value.trim();
+  const caption = document.getElementById('menuCaption').value.trim();
+
+  if (!url) {
+    showMessage('error', 'URL obrázka je povinné', 'menuMessage');
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('menu_images')
+      .insert({
+        image_url: url,
+        caption: caption || null,
+        created_by: currentUser.id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    showMessage('success', 'Menu obrázok bol úspešne pridaný', 'menuMessage');
+    document.getElementById('menuForm').reset();
+    loadMenuItems();
+  } catch (err) {
+    console.error('Error adding menu item:', err);
+    showMessage('error', 'Chyba pri pridávaní menu obrázka: ' + err.message, 'menuMessage');
+  }
+}
+
+async function loadMenuItems() {
+  const loadingEl = document.getElementById('menuLoading');
+  const itemsEl = document.getElementById('menuItems');
+  
+  loadingEl.style.display = 'block';
+  itemsEl.innerHTML = '';
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('menu_images')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    loadingEl.style.display = 'none';
     
-    if (!username || !password) {
-        showLoginError('Vyplňte všetky polia');
-        return;
+    if (data && data.length > 0) {
+      data.forEach(item => {
+        itemsEl.appendChild(createMenuItemCard(item));
+      });
+    } else {
+      itemsEl.innerHTML = '<p>Žiadne menu obrázky</p>';
     }
-
-    showLoginError('Prihlasovanie...', false);
-
-    try {
-        // Volanie našej custom funkcie cez RPC
-        const { data, error } = await cmsSupabase.rpc('cms_verify_login', {
-            p_username: username,
-            p_password: password
-        });
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-            const user = data[0];
-            loginSuccess({
-                user_id: user.user_id,
-                username: user.username, 
-                full_name: user.full_name,
-                last_login: user.last_login
-            });
-        } else {
-            showLoginError('Nesprávne užívateľské meno alebo heslo');
-        }
-    } catch (error) {
-        console.error('[CMS] Login error:', error);
-        showLoginError('Chyba pri prihlasovaní: ' + error.message);
-    }
+  } catch (err) {
+    console.error('Error loading menu:', err);
+    loadingEl.style.display = 'none';
+    itemsEl.innerHTML = '<p>Chyba pri načítavaní menu obrázkov</p>';
+  }
 }
 
-function loginSuccess(userData) {
-    currentUser = userData;
-    saveSession(userData);
+function createMenuItemCard(item) {
+  const card = document.createElement('div');
+  card.className = 'item-card';
+  
+  card.innerHTML = `
+    <img src="${item.image_url}" alt="${item.caption || 'Menu image'}" class="item-image" onerror="this.src='assets/logo.png'">
+    <h4>${item.caption || 'Bez názvu'}</h4>
+    <p><small>Pridané: ${new Date(item.created_at).toLocaleDateString('sk-SK')}</small></p>
+    <div class="item-actions">
+      <button class="btn btn-danger" onclick="deleteMenuItem('${item.id}')">Zmazať</button>
+    </div>
+  `;
+  
+  return card;
+}
+
+async function deleteMenuItem(itemId) {
+  if (!confirm('Naozaj chcete zmazať tento menu obrázok?')) return;
+
+  try {
+    const { error } = await supabaseClient
+      .from('menu_images')
+      .delete()
+      .eq('id', itemId);
+
+    if (error) throw error;
+
+    showMessage('success', 'Menu obrázok bol zmazaný', 'menuMessage');
+    loadMenuItems();
+  } catch (err) {
+    console.error('Error deleting menu item:', err);
+    showMessage('error', 'Chyba pri mazaní menu obrázka: ' + err.message, 'menuMessage');
+  }
+}
+
+// Actions functions
+async function addAction() {
+  const title = document.getElementById('actionTitle').value.trim();
+  const description = document.getElementById('actionDescription').value.trim();
+  const imageUrl = document.getElementById('actionImageUrl').value.trim();
+  const startDate = document.getElementById('actionStartDate').value;
+  const endDate = document.getElementById('actionEndDate').value;
+
+  if (!title) {
+    showMessage('error', 'Názov akcie je povinný', 'actionsMessage');
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('cms_actions')
+      .insert({
+        title: title,
+        description: description || null,
+        image_url: imageUrl || null,
+        start_date: startDate || null,
+        end_date: endDate || null,
+        created_by: currentUser.id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    showMessage('success', 'Akcia bola úspešne pridaná', 'actionsMessage');
+    document.getElementById('actionsForm').reset();
+    loadActionsItems();
+  } catch (err) {
+    console.error('Error adding action:', err);
+    showMessage('error', 'Chyba pri pridávaní akcie: ' + err.message, 'actionsMessage');
+  }
+}
+
+async function loadActionsItems() {
+  const loadingEl = document.getElementById('actionsLoading');
+  const itemsEl = document.getElementById('actionsItems');
+  
+  loadingEl.style.display = 'block';
+  itemsEl.innerHTML = '';
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('cms_actions')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    loadingEl.style.display = 'none';
     
-    // Skry login screen, ukáž CMS
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('cmsApp').style.display = 'block';
-    document.getElementById('cmsFooter').style.display = 'block';
-    
-    // Aktualizuj user info
-    document.getElementById('currentUser').textContent = 
-        `Prihlásený: ${userData.full_name || userData.username}`;
-    
-    // Načítaj CMS data
-    loadCMSData();
-    
-    console.log('[CMS] Prihlásenie úspešné:', userData);
-}
-
-function handleLogout() {
-    currentUser = null;
-    clearSession();
-    showLoginScreen();
-}
-
-function showLoginScreen() {
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('cmsApp').style.display = 'none';  
-    document.getElementById('cmsFooter').style.display = 'none';
-    
-    // Vyčisti form
-    document.getElementById('loginForm').reset();
-    hideLoginError();
-}
-
-function showLoginError(message, isError = true) {
-    const errorDiv = document.getElementById('loginError');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-    errorDiv.style.backgroundColor = isError ? '#fee' : '#e7f3ff';
-    errorDiv.style.color = isError ? '#c33' : '#0066cc';
-    errorDiv.style.borderColor = isError ? '#fcc' : '#b8d4f0';
-}
-
-function hideLoginError() {
-    document.getElementById('loginError').style.display = 'none';
-}
-
-// CMS Functions (len ak je užívateľ prihlásený)
-async function loadCMSData() {
-    if (!currentUser || !cmsSupabase) return;
-    
-    try {
-        await Promise.all([
-            loadGalleryImages(),
-            loadMenuImages(), 
-            loadCurrentStatus()
-        ]);
-    } catch (error) {
-        console.error('[CMS] Chyba pri načítavaní dát:', error);
-        showError('Chyba pri načítavaní dát');
+    if (data && data.length > 0) {
+      data.forEach(item => {
+        itemsEl.appendChild(createActionItemCard(item));
+      });
+    } else {
+      itemsEl.innerHTML = '<p>Žiadne akcie</p>';
     }
+  } catch (err) {
+    console.error('Error loading actions:', err);
+    loadingEl.style.display = 'none';
+    itemsEl.innerHTML = '<p>Chyba pri načítavaní akcií</p>';
+  }
 }
 
-async function loadGalleryImages() {
-    try {
-        const { data, error } = await cmsSupabase
-            .from('gallery')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        const container = document.getElementById('galleryItems');
-        if (!container) return;
-
-        if (!data || data.length === 0) {
-            container.innerHTML = '<p>Žiadne obrázky v galérii.</p>';
-            return;
-        }
-
-        container.innerHTML = data.map(item => `
-            <div class="cms-item">
-                <img src="${item.url}" alt="${item.caption || 'Obrázok'}" />
-                <div class="cms-item-info">
-                    <h4>${item.caption || 'Bez názvu'}</h4>
-                    <p>Pridané: ${new Date(item.created_at).toLocaleDateString('sk-SK')}</p>
-                </div>
-                <button class="cms-delete" onclick="deleteGalleryImage('${item.id}')">
-                    Zmazať
-                </button>
-            </div>
-        `).join('');
-
-        console.log('[CMS] Načítané galéria obrázky:', data.length);
-    } catch (error) {
-        console.error('[CMS] Chyba pri načítavaní galérie:', error);
-        showStatus('galleryStatus', 'Chyba pri načítavaní galérie: ' + error.message, 'error');
-    }
+function createActionItemCard(item) {
+  const card = document.createElement('div');
+  card.className = 'item-card';
+  
+  const statusClass = item.is_active ? 'status-active' : 'status-inactive';
+  const statusText = item.is_active ? 'Aktívna' : 'Neaktívna';
+  
+  const imageHTML = item.image_url ? 
+    `<img src="${item.image_url}" alt="${item.title}" class="item-image" onerror="this.src='assets/logo.png'">` : '';
+  
+  const dateRange = (item.start_date || item.end_date) ? 
+    `<p><small>${item.start_date || ''} - ${item.end_date || ''}</small></p>` : '';
+  
+  card.innerHTML = `
+    ${imageHTML}
+    <h4>${item.title}</h4>
+    <p>${item.description || 'Bez popisu'}</p>
+    ${dateRange}
+    <div class="status-indicator ${statusClass}">${statusText}</div>
+    <p><small>Pridané: ${new Date(item.created_at).toLocaleDateString('sk-SK')}</small></p>
+    <div class="item-actions">
+      <button class="btn btn-primary" onclick="toggleActionStatus('${item.id}', ${!item.is_active})">
+        ${item.is_active ? 'Deaktivovať' : 'Aktivovať'}
+      </button>
+      <button class="btn btn-danger" onclick="deleteAction('${item.id}')">Zmazať</button>
+    </div>
+  `;
+  
+  return card;
 }
 
-async function loadMenuImages() {
-    try {
-        const { data, error } = await cmsSupabase
-            .from('menu_images')
-            .select('*')
-            .order('created_at', { ascending: false });
+async function toggleActionStatus(actionId, newStatus) {
+  try {
+    const { error } = await supabaseClient
+      .from('cms_actions')
+      .update({ 
+        is_active: newStatus,
+        updated_by: currentUser.id
+      })
+      .eq('id', actionId);
 
-        if (error) throw error;
+    if (error) throw error;
 
-        const container = document.getElementById('menuItems');
-        if (!container) return;
-
-        if (!data || data.length === 0) {
-            container.innerHTML = '<p>Žiadne menu obrázky.</p>';
-            return;
-        }
-
-        container.innerHTML = data.map(item => `
-            <div class="cms-item">
-                <img src="${item.image_url}" alt="${item.caption || 'Menu'}" />
-                <div class="cms-item-info">
-                    <h4>${item.caption || 'Bez názvu'}</h4>
-                    <p>Pridané: ${new Date(item.created_at).toLocaleDateString('sk-SK')}</p>
-                </div>
-                <button class="cms-delete" onclick="deleteMenuImage('${item.id}')">
-                    Zmazať
-                </button>
-            </div>
-        `).join('');
-
-        console.log('[CMS] Načítané menu obrázky:', data.length);
-    } catch (error) {
-        console.error('[CMS] Chyba pri načítavaní menu:', error);
-        showStatus('menuStatus', 'Chyba pri načítavaní menu: ' + error.message, 'error');
-    }
+    showMessage('success', `Akcia bola ${newStatus ? 'aktivovaná' : 'deaktivovaná'}`, 'actionsMessage');
+    loadActionsItems();
+  } catch (err) {
+    console.error('Error updating action status:', err);
+    showMessage('error', 'Chyba pri aktualizácii stavu akcie: ' + err.message, 'actionsMessage');
+  }
 }
 
-async function loadCurrentStatus() {
-    try {
-        const { data, error } = await cmsSupabase
-            .from('site_status')
-            .select('*')
-            .order('updated_at', { ascending: false })
-            .limit(1);
+async function deleteAction(actionId) {
+  if (!confirm('Naozaj chcete zmazať túto akciu?')) return;
 
-        if (error) throw error;
+  try {
+    const { error } = await supabaseClient
+      .from('cms_actions')
+      .delete()
+      .eq('id', actionId);
 
-        const statusSpan = document.getElementById('currentStatus');
-        if (!statusSpan) return;
+    if (error) throw error;
 
-        if (data && data.length > 0) {
-            const status = data[0];
-            statusSpan.textContent = status.is_open ? 'Otvorené' : 'Zatvorené';
-            
-            const select = document.getElementById('statusSelect');
-            if (select) {
-                select.value = status.is_open ? 'open' : 'closed';
-            }
-        } else {
-            statusSpan.textContent = 'Neznámy';
-        }
-    } catch (error) {
-        console.error('[CMS] Chyba pri načítavaní stavu:', error);
-        document.getElementById('currentStatus').textContent = 'Chyba';
-    }
-}
-
-// Add functions
-async function addGalleryImage() {
-    if (!currentUser) return;
-    
-    const url = document.getElementById('galleryUrl').value.trim();
-    const caption = document.getElementById('galleryCaption').value.trim();
-
-    if (!url) {
-        showStatus('galleryStatus', 'Zadajte URL obrázka', 'error');
-        return;
-    }
-
-    try {
-        const { error } = await cmsSupabase
-            .from('gallery')
-            .insert([{ url, caption: caption || null }]);
-
-        if (error) throw error;
-
-        showStatus('galleryStatus', 'Obrázok pridaný do galérie', 'success');
-        document.getElementById('galleryUrl').value = '';
-        document.getElementById('galleryCaption').value = '';
-        loadGalleryImages();
-    } catch (error) {
-        console.error('[CMS] Chyba pri pridávaní do galérie:', error);
-        showStatus('galleryStatus', 'Chyba: ' + error.message, 'error');
-    }
-}
-
-async function addMenuImage() {
-    if (!currentUser) return;
-    
-    const url = document.getElementById('menuUrl').value.trim();
-    const caption = document.getElementById('menuCaption').value.trim();
-
-    if (!url) {
-        showStatus('menuStatus', 'Zadajte URL obrázka', 'error');
-        return;
-    }
-
-    try {
-        const { error } = await cmsSupabase
-            .from('menu_images')
-            .insert([{ image_url: url, caption: caption || null }]);
-
-        if (error) throw error;
-
-        showStatus('menuStatus', 'Obrázok pridaný do menu', 'success');
-        document.getElementById('menuUrl').value = '';
-        document.getElementById('menuCaption').value = '';
-        loadMenuImages();
-    } catch (error) {
-        console.error('[CMS] Chyba pri pridávaní do menu:', error);
-        showStatus('menuStatus', 'Chyba: ' + error.message, 'error');
-    }
-}
-
-// Delete functions
-async function deleteGalleryImage(id) {
-    if (!currentUser || !confirm('Naozaj chcete zmazať tento obrázok z galérie?')) return;
-
-    try {
-        const { error } = await cmsSupabase
-            .from('gallery')
-            .delete()
-            .eq('id', id);
-
-        if (error) throw error;
-
-        showStatus('galleryStatus', 'Obrázok zmazaný z galérie', 'success');
-        loadGalleryImages();
-    } catch (error) {
-        console.error('[CMS] Chyba pri mazaní z galérie:', error);
-        showStatus('galleryStatus', 'Chyba pri mazaní: ' + error.message, 'error');
-    }
-}
-
-async function deleteMenuImage(id) {
-    if (!currentUser || !confirm('Naozaj chcete zmazať tento obrázok z menu?')) return;
-
-    try {
-        const { error } = await cmsSupabase
-            .from('menu_images')
-            .delete()
-            .eq('id', id);
-
-        if (error) throw error;
-
-        showStatus('menuStatus', 'Obrázok zmazaný z menu', 'success');
-        loadMenuImages();
-    } catch (error) {
-        console.error('[CMS] Chyba pri mazaní z menu:', error);
-        showStatus('menuStatus', 'Chyba pri mazaní: ' + error.message, 'error');
-    }
-}
-
-// Status update
-async function updateSiteStatus() {
-    if (!currentUser) return;
-    
-    const isOpen = document.getElementById('statusSelect').value === 'open';
-
-    try {
-        const { error } = await cmsSupabase
-            .from('site_status')
-            .upsert([{ 
-                id: 1, // Používame fixné ID
-                is_open: isOpen,
-                updated_at: new Date().toISOString()
-            }]);
-
-        if (error) throw error;
-
-        showStatus('statusUpdateResult', `Stav aktualizovaný: ${isOpen ? 'Otvorené' : 'Zatvorené'}`, 'success');
-        loadCurrentStatus();
-    } catch (error) {
-        console.error('[CMS] Chyba pri aktualizácii stavu:', error);
-        showStatus('statusUpdateResult', 'Chyba pri aktualizácii: ' + error.message, 'error');
-    }
+    showMessage('success', 'Akcia bola zmazaná', 'actionsMessage');
+    loadActionsItems();
+  } catch (err) {
+    console.error('Error deleting action:', err);
+    showMessage('error', 'Chyba pri mazaní akcie: ' + err.message, 'actionsMessage');
+  }
 }
 
 // Utility functions
-function showStatus(elementId, message, type) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
+function showMessage(type, message, containerId = null) {
+  const messageHTML = `<div class="message ${type}">${message}</div>`;
+  
+  if (containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = messageHTML;
     
-    element.innerHTML = `<div class="cms-status ${type}">${message}</div>`;
-    setTimeout(() => {
-        element.innerHTML = '';
-    }, 5000);
+    // Auto-hide success messages
+    if (type === 'success') {
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 3000);
+    }
+  } else {
+    // Show global message
+    console.log(`${type.toUpperCase()}: ${message}`);
+  }
 }
 
-function showError(message) {
-    console.error('[CMS] Error:', message);
-    alert('CMS Chyba: ' + message);
+async function logout() {
+  if (!confirm('Naozaj sa chcete odhlásiť?')) return;
+
+  const sessionToken = localStorage.getItem('cms_session_token');
+  
+  if (sessionToken && supabaseClient) {
+    try {
+      // Delete session from database
+      await supabaseClient
+        .from('cms_sessions')
+        .delete()
+        .eq('session_token', sessionToken);
+    } catch (err) {
+      console.error('Error during logout:', err);
+    }
+  }
+
+  // Clear local storage
+  localStorage.removeItem('cms_session_token');
+  localStorage.removeItem('cms_user_id');
+  localStorage.removeItem('cms_username');
+
+  // Redirect to login
+  window.location.href = 'logincms.html';
 }
 
-// Make functions globally available
-window.addGalleryImage = addGalleryImage;
-window.addMenuImage = addMenuImage;
-window.deleteGalleryImage = deleteGalleryImage;
-window.deleteMenuImage = deleteMenuImage;
-window.updateSiteStatus = updateSiteStatus;
+// Clean expired sessions periodically
+setInterval(async function() {
+  if (supabaseClient) {
+    try {
+      await supabaseClient.rpc('clean_expired_cms_sessions');
+    } catch (err) {
+      console.error('Error cleaning expired sessions:', err);
+    }
+  }
+}, 30 * 60 * 1000); // Every 30 minutes

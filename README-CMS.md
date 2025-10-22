@@ -1,102 +1,153 @@
-# CMS Admin Panel - Návod na nastavenie
+# CMS Systém pre U Dvou Sheriffů
 
-## 🏗️ Nastavenie databázy
+## 📋 Prehľad
 
-### 1. Spustite SQL schémy v Supabase (v tomto poradí):
+Kompletný Content Management System pre správu obsahu webu U Dvou Sheriffů s bezpečným prihlasovaním a administráciou cez Supabase databázu.
+
+## 🚀 Inštalácia
+
+### 1. Spustite SQL v Supabase
 
 ```sql
--- 1. Vytvorenie CMS užívateľskej tabuľky
--- Spustite obsah: bot/cms-users-schema.sql
-
--- 2. Vytvorenie testovacích užívateľov  
--- Spustite obsah: bot/cms-create-users.sql
+-- Skopírujte a spustite obsah súboru bot/cms-schema.sql v Supabase SQL Editor
 ```
 
-## 👤 Prednastavení užívatelia
+**Dôležité:** SQL automaticky vytvorí admin používateľa:
+- **Používateľské meno:** `admin`
+- **Heslo:** `admin123`
+- **⚠️ ZMEŇTE HESLO PO PRVOM PRIHLÁSENÍ!**
 
-Po spustení SQL skriptov budete mať k dispozícii:
+### 2. Prístup k CMS
 
-| Užívateľ | Heslo | Rola |
-|----------|--------|------|
-| `admin` | `admin123` | Hlavný Administrator |
-| `sheriff` | `sheriff456` | Sheriff Manager |
-| `manager` | `manager789` | Content Manager |
-
-## 🔐 Prístup do CMS
-
-1. **URL:** `https://your-site.com/cms.html` (alebo local: `http://localhost:8080/cms.html`)
-2. **Prihlásenie:** Zadajte užívateľské meno a heslo
-3. **Session:** Automatické odhlásenie po 8 hodinách nečinnosti
-
-## 🎛️ Funkcie CMS
-
-### Galéria (homepage carousel + galéria stránka)
-- ✅ Pridávanie obrázkov cez URL
-- ✅ Mazanie existujúcich obrázkov
-- ✅ Realtime updates na webe
-
-### Menu obrázky (menu stránka)  
-- ✅ Pridávanie menu obrázkov cez URL
-- ✅ Mazanie menu obrázkov
-- ✅ Realtime updates na menu stránke
-
-### Stav hospody
-- ✅ Prepínanie Otvorené/Zatvorené
-- ✅ Realtime aktualizácia status badge na webe
-
-## 🔧 Správa užívateľov (cez SQL)
-
-### Vytvorenie nového užívateľa:
-```sql
-INSERT INTO public.cms_users (username, password_hash, email, full_name) VALUES 
-('novy_user', crypt('jeho_heslo', gen_salt('bf')), 'email@example.com', 'Meno Priezvisko');
+#### Login stránka:
+```
+https://váš-web.sk/logincms.html
 ```
 
-### Zmena hesla:
-```sql
-UPDATE public.cms_users 
-SET password_hash = crypt('nove_heslo', gen_salt('bf')) 
-WHERE username = 'admin';
+#### CMS Dashboard:
 ```
-
-### Deaktivácia užívateľa:
-```sql
-UPDATE public.cms_users SET is_active = false WHERE username = 'username';
+https://váš-web.sk/cms.html
 ```
+*(Presmeruje na login ak nie ste prihlásení)*
 
-### Zmazanie užívateľa:
-```sql
-DELETE FROM public.cms_users WHERE username = 'username';
-```
+## 🔧 Funkcionalita
 
-## 🛡️ Bezpečnosť
+### 🎨 **Správa Galérie**
+- Pridávanie obrázkov do hlavnej galérie (`galeria.html`)
+- Obrázky sa zobrazia aj v carousel na `index.html` (max 15)
+- URL input - nahrajte na Imgur/Cloudinary a vložte link
+- Realtime updates - nové obrázky sa objavia okamžite
 
-- **Bcrypt hash** - heslá sú bezpečne hashované
-- **RLS políciess** - prístup len cez service_role
-- **Session timeout** - automatické odhlásenie  
-- **Input validation** - validácia všetkých vstupov
-- **HTTPS recommended** - používajte HTTPS v produkcii
+### 🍽️ **Správa Menu Obrázkov**
+- Pridávanie obrázkov do menu sekcie (`menu.html`)
+- Portrait formát obrázkov (1080x1920)
+- Caption pre názov jedla
+- Mazanie starých obrázkov
 
-## 📋 Databázové tabuľky
+### 🎉 **Správa Akcií**
+- Vytváracie špeciálnych ponúk a akcií
+- Názov, popis, obrázok, dátumové rozpätie
+- Aktivovanie/deaktivovanie akcií
+- Pripravené pre integráciu na `akcie.html`
 
-CMS pracuje s týmito tabuľkami:
-- `cms_users` - admin užívatelia  
-- `gallery` - obrázky pre galériu a homepage
-- `menu_images` - obrázky pre menu stránku
-- `site_status` - stav hospody (otvorené/zatvorené)
+## 🔐 Bezpečnosť
 
-## 🚀 Deployment
+### **Session Management:**
+- 24-hodinové sessions s automatickým vypršaním
+- Bezpečné session tokeny
+- Automatické čistenie expired sessions
 
-1. Nahrajte všetky súbory na server
-2. Nastavte Supabase config v `supabase-config.js`
-3. Spustite SQL schémy
-4. Vytvorte admin užívateľov  
-5. CMS bude dostupné na `/cms.html`
+### **Database Security:**
+- Row Level Security (RLS) policies
+- Authenticated prístup pre CMS operácie
+- Public read prístup pre web stránky
 
-## 📞 Podpora
+### **Password Security:**
+- Bcrypt hashing pre heslá
+- Secure session storage
 
-V prípade problémov skontrolujte:
-- Developer Console pre JavaScript chyby
-- Supabase logs pre databázové chyby  
-- Správnosť RLS policies
-- Platnosť service_role kľúča
+## 📊 Database Schema
+
+### **Tabuľky:**
+- `cms_users` - CMS používatelia
+- `cms_sessions` - Aktívne sessions
+- `cms_actions` - Správa akcií
+- `gallery` - Galéria obrázkov (rozšírená o CMS tracking)
+- `menu_images` - Menu obrázky (rozšírená o CMS tracking)
+
+## 🎯 Použitie
+
+### **Prvé prihlásenie:**
+1. Idite na `/logincms.html`
+2. Prihlaste sa ako `admin` / `admin123`
+3. Okamžite zmeňte heslo v databáze!
+
+### **Pridávanie obsahu:**
+1. **Galéria:** URL → Caption → Pridať
+2. **Menu:** URL → Názov jedla → Pridať  
+3. **Akcie:** Vyplňte formulár → Pridať akciu
+
+### **Správa obsahu:**
+- Všetky položky majú Delete tlačidlo
+- Akcie sa dajú aktivovať/deaktivovať
+- Realtime updates na web stránkach
+
+## 🔄 Integrácia s Web Stránkami
+
+CMS je už integrované s existujúcimi stránkami:
+
+- ✅ **Galéria** (`galeria.html`) - automaticky načíta z `gallery` tabuľky
+- ✅ **Menu** (`menu.html`) - automaticky načíta z `menu_images` tabuľky  
+- ✅ **Homepage carousel** (`index.html`) - načíta max 15 z `gallery`
+- 🔄 **Akcie** (`akcie.html`) - pripravené pre integráciu s `cms_actions`
+
+## 🛠️ Technické detaily
+
+### **Frontend:**
+- Vanilla JavaScript (ES6+)
+- Responsive CSS Grid/Flexbox
+- Real-time UI updates
+
+### **Backend:**
+- Supabase PostgreSQL databáza
+- Row Level Security policies
+- Automatic triggers pre updated_at
+
+### **API:**
+- Supabase JavaScript client
+- RESTful CRUD operácie
+- Real-time subscriptions
+
+## 🔒 Bezpečnostné odporúčania
+
+1. **Zmeňte default heslo** okamžite po inštalácii
+2. **Používajte HTTPS** v produkcii
+3. **Pravidelne zálohujte** databázu
+4. **Monitorujte** CMS aktivity
+5. **Aktualizujte** Supabase kľúče ak je potreba
+
+## 🆘 Troubleshooting
+
+### **Problém s prihlásením:**
+- Skontrolujte Supabase konfiguráciu v `supabase-config.js`
+- Overte, že SQL schéma bola správne spustená
+- Skontrolujte konzolu prehliadača pre chyby
+
+### **Obrázky sa nezobrazujú:**
+- Overte, že URL obrázkov sú platné a verejne prístupné
+- Skontrolujte CORS nastavenia obrázkov
+- Použite Imgur alebo Cloudinary pre spoľahlivé hosting
+
+### **Session problémy:**
+- Vymazať localStorage v prehliadači
+- Skontrolovať `cms_sessions` tabuľku v databáze
+- Overte system čas servera vs. klienta
+
+## 📈 Rozšírenia
+
+CMS je pripravený na ďalšie rozšírenia:
+- 📝 **Správa textového obsahu**
+- 👥 **Viacero admin používateľov** 
+- 📊 **Analytics a štatistiky**
+- 🔔 **Email notifikácie**
+- 📱 **Mobile optimalizácia**

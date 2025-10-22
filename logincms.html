@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CMS Login — U Dvou Sheriffů</title>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+    <link rel="stylesheet" href="styles/styles.css">
+    <script src="/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+    <style>
+      .login-container {
+        max-width: 400px;
+        margin: 100px auto;
+        padding: 2rem;
+        background: var(--card);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(18,18,18,0.1);
+      }
+      .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .form-input {
+        padding: 0.75rem;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+      }
+      .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+      .login-btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .login-btn:hover {
+        background: var(--primary-dark);
+      }
+      .login-btn:disabled {
+        background: var(--muted);
+        cursor: not-allowed;
+      }
+      .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+      }
+      .success-message {
+        color: #28a745;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+      }
+      .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .login-header h1 {
+        margin: 0 0 0.5rem 0;
+        color: var(--text);
+      }
+      .login-header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-header">
+        <h1>CMS Prihlásenie</h1>
+        <p>Správa obsahu - U Dvou Sheriffů</p>
+      </div>
+      
+      <form class="login-form" id="loginForm">
+        <div class="form-group">
+          <label for="username">Používateľské meno:</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            class="form-input" 
+            required 
+            autocomplete="username"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Heslo:</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="form-input" 
+            required 
+            autocomplete="current-password"
+          >
+        </div>
+        
+        <button type="submit" class="login-btn" id="loginBtn">
+          Prihlásiť sa
+        </button>
+        
+        <div id="loginMessage"></div>
+      </form>
+    </div>
+
+    <script>
+      // Initialize Supabase client
+      let supabaseClient = null;
+      
+      if (window.SHERIFF_SUPABASE && window.SHERIFF_SUPABASE.url && window.SHERIFF_SUPABASE.key) {
+        const createClient = window.createClient || (window.supabase && window.supabase.createClient);
+        if (createClient) {
+          supabaseClient = createClient(window.SHERIFF_SUPABASE.url, window.SHERIFF_SUPABASE.key);
+        }
+      }
+
+      // Check if already logged in
+      document.addEventListener('DOMContentLoaded', function() {
+        const sessionToken = localStorage.getItem('cms_session_token');
+        if (sessionToken) {
+          // Verify session and redirect if valid
+          verifySession(sessionToken);
+        }
+      });
+
+      async function verifySession(token) {
+        if (!supabaseClient) return false;
+        
+        try {
+          const { data, error } = await supabaseClient
+            .from('cms_sessions')
+            .select('id, expires_at, user_id')
+            .eq('session_token', token)
+            .gt('expires_at', new Date().toISOString())
+            .single();
+          
+          if (data && !error) {
+            // Valid session, redirect to CMS
+            window.location.href = 'cms.html';
+            return true;
+          } else {
+            // Invalid session, remove token
+            localStorage.removeItem('cms_session_token');
+            return false;
+          }
+        } catch (err) {
+          console.error('Session verification failed:', err);
+          localStorage.removeItem('cms_session_token');
+          return false;
+        }
+      }
+
+      // Login form handler
+      document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!supabaseClient) {
+          showMessage('Supabase nie je nakonfigurovaný', 'error');
+          return;
+        }
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const loginBtn = document.getElementById('loginBtn');
+        
+        if (!username || !password) {
+          showMessage('Vyplňte všetky polia', 'error');
+          return;
+        }
+
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Prihlasujem...';
+
+        try {
+          // Get user from database
+          const { data: userData, error: userError } = await supabaseClient
+            .from('cms_users')
+            .select('id, username, password_hash, is_active')
+            .eq('username', username)
+            .eq('is_active', true)
+            .single();
+
+          if (userError || !userData) {
+            showMessage('Nesprávne používateľské meno alebo heslo', 'error');
+            return;
+          }
+
+          // Verify password (pre-hashed passwords in demo)
+          // V produkcii by ste mali použiť bcrypt.compare()
+          const isValidPassword = await bcrypt.compare(password, userData.password_hash);
+          
+          if (!isValidPassword) {
+            showMessage('Nesprávne používateľské meno alebo heslo', 'error');
+            return;
+          }
+
+          // Create session
+          const sessionToken = generateSessionToken();
+          const expiresAt = new Date();
+          expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
+
+          const { data: sessionData, error: sessionError } = await supabaseClient
+            .from('cms_sessions')
+            .insert({
+              user_id: userData.id,
+              session_token: sessionToken,
+              expires_at: expiresAt.toISOString()
+            })
+            .select()
+            .single();
+
+          if (sessionError) {
+            console.error('Session creation failed:', sessionError);
+            showMessage('Chyba pri vytváraní session', 'error');
+            return;
+          }
+
+          // Update last login
+          await supabaseClient
+            .from('cms_users')
+            .update({ last_login: new Date().toISOString() })
+            .eq('id', userData.id);
+
+          // Store session token
+          localStorage.setItem('cms_session_token', sessionToken);
+          localStorage.setItem('cms_user_id', userData.id);
+          localStorage.setItem('cms_username', userData.username);
+
+          showMessage('Prihlásenie úspešné! Presmerovávam...', 'success');
+          
+          // Redirect to CMS
+          setTimeout(() => {
+            window.location.href = 'cms.html';
+          }, 1000);
+
+        } catch (err) {
+          console.error('Login error:', err);
+          showMessage('Chyba pri prihlasovaní', 'error');
+        } finally {
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Prihlásiť sa';
+        }
+      });
+
+      function generateSessionToken() {
+        return 'cms_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+      }
+
+      function showMessage(message, type) {
+        const messageEl = document.getElementById('loginMessage');
+        messageEl.textContent = message;
+        messageEl.className = type === 'error' ? 'error-message' : 'success-message';
+        
+        if (type === 'success') {
+          setTimeout(() => {
+            messageEl.textContent = '';
+          }, 3000);
+        }
+      }
+
+      // Auto-focus username field
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('username').focus();
+      });
+    </script>
+  </body>
+</html>
