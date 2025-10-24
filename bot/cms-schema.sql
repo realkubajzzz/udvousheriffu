@@ -1,4 +1,4 @@
--- CMS Database Schema pre U Dvou Sheriffů
+-- CMS Database Schema pre U Dvou Šerifů
 -- Spustite v Supabase SQL Editor
 
 -- 1. Tabuľka pre CMS používateľov
@@ -41,6 +41,11 @@ BEGIN
                    WHERE table_name = 'gallery' AND column_name = 'updated_at') THEN
         ALTER TABLE public.gallery ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
     END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'gallery' AND column_name = 'sort_order') THEN
+        ALTER TABLE public.gallery ADD COLUMN sort_order INTEGER DEFAULT 0;
+    END IF;
 END $$;
 
 -- Pridaj stĺpce pre CMS tracking do menu_images tabuľky ak neexistujú
@@ -60,6 +65,11 @@ BEGIN
                    WHERE table_name = 'menu_images' AND column_name = 'updated_at') THEN
         ALTER TABLE public.menu_images ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
     END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'menu_images' AND column_name = 'sort_order') THEN
+        ALTER TABLE public.menu_images ADD COLUMN sort_order INTEGER DEFAULT 0;
+    END IF;
 END $$;
 
 -- 4. Vytvor tabuľku pre správu akcií
@@ -71,6 +81,7 @@ CREATE TABLE IF NOT EXISTS public.cms_actions (
   is_active BOOLEAN DEFAULT true,
   start_date DATE,
   end_date DATE,
+  sort_order INTEGER DEFAULT 0,
   created_by UUID REFERENCES public.cms_users(id),
   updated_by UUID REFERENCES public.cms_users(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -82,19 +93,19 @@ ALTER TABLE public.cms_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cms_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cms_actions ENABLE ROW LEVEL SECURITY;
 
--- CMS Users policies - len authenticated môžu čítať
-CREATE POLICY "cms_users_read" ON public.cms_users
-  FOR SELECT TO authenticated
+-- CMS Users policies - povoliť čítanie pre login (anonymný prístup)
+CREATE POLICY "cms_users_login" ON public.cms_users
+  FOR SELECT TO anon, authenticated
   USING (true);
 
 CREATE POLICY "cms_users_update" ON public.cms_users
   FOR UPDATE TO authenticated
   USING (auth.uid()::text = id::text);
 
--- CMS Sessions policies
-CREATE POLICY "cms_sessions_own" ON public.cms_sessions
-  FOR ALL TO authenticated
-  USING (auth.uid()::text = user_id::text);
+-- CMS Sessions policies - povoliť anonymný prístup pre login
+CREATE POLICY "cms_sessions_all" ON public.cms_sessions
+  FOR ALL TO anon, authenticated
+  USING (true);
 
 -- CMS Actions policies - public read, authenticated write
 CREATE POLICY "cms_actions_read" ON public.cms_actions
@@ -106,9 +117,9 @@ CREATE POLICY "cms_actions_write" ON public.cms_actions
   USING (true);
 
 -- 6. Grants
-GRANT SELECT ON public.cms_users TO authenticated;
+GRANT SELECT ON public.cms_users TO anon, authenticated;  -- Povoli anonymný prístup pre login
 GRANT UPDATE ON public.cms_users TO authenticated;
-GRANT ALL ON public.cms_sessions TO authenticated;
+GRANT ALL ON public.cms_sessions TO anon, authenticated;
 GRANT SELECT ON public.cms_actions TO anon, authenticated;
 GRANT INSERT, UPDATE, DELETE ON public.cms_actions TO authenticated;
 GRANT ALL ON public.cms_users TO service_role;

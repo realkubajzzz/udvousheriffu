@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Review Test</title>
+</head>
+<body>
+    <h1>Quick Review Test</h1>
+    <div id="result">Loading...</div>
+    
+    <script src="/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    
+    <script>
+        async function runTest() {
+            const resultEl = document.getElementById('result');
+            
+            try {
+                console.log('Config:', window.SHERIFF_SUPABASE);
+                console.log('Supabase:', window.supabase);
+                
+                if (!window.SHERIFF_SUPABASE) {
+                    throw new Error('Config missing');
+                }
+                
+                if (!window.supabase) {
+                    throw new Error('Supabase library missing');
+                }
+                
+                const client = window.supabase.createClient(
+                    window.SHERIFF_SUPABASE.url,
+                    window.SHERIFF_SUPABASE.key
+                );
+                
+                console.log('Client created:', client);
+                
+                // Test query
+                const { data, error, count } = await client
+                    .from('reviews')
+                    .select('*', { count: 'exact' })
+                    .eq('is_approved', true);
+                
+                console.log('Query result:', { data, error, count });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                resultEl.innerHTML = `
+                    <h2>✅ Success!</h2>
+                    <p>Found ${data ? data.length : 0} approved reviews</p>
+                    <p>Total count: ${count}</p>
+                    <h3>Reviews:</h3>
+                    ${data && data.length > 0 ? 
+                        data.map(r => `<p><strong>${r.customer_name}</strong> (${'⭐'.repeat(r.rating)}): ${r.review_text}</p>`).join('') 
+                        : '<p>No reviews found</p>'
+                    }
+                `;
+                
+            } catch (err) {
+                console.error('Test error:', err);
+                resultEl.innerHTML = `
+                    <h2>❌ Error</h2>
+                    <p>${err.message}</p>
+                    <pre>${JSON.stringify(err, null, 2)}</pre>
+                `;
+            }
+        }
+        
+        // Run test when page loads
+        document.addEventListener('DOMContentLoaded', runTest);
+    </script>
+</body>
+</html>

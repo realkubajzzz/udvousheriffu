@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Supabase Connection</title>
+</head>
+<body>
+    <h1>Supabase Connection Debug</h1>
+    <div id="status">Loading...</div>
+    
+    <script src="/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const statusEl = document.getElementById('status');
+            
+            // Check config
+            console.log('SHERIFF_SUPABASE:', window.SHERIFF_SUPABASE);
+            
+            // Check Supabase library
+            console.log('Supabase library available:', typeof window.supabase);
+            console.log('createClient:', typeof window.supabase?.createClient);
+            
+            if (!window.SHERIFF_SUPABASE) {
+                statusEl.innerHTML = '❌ SHERIFF_SUPABASE config missing';
+                return;
+            }
+            
+            if (!window.supabase?.createClient) {
+                statusEl.innerHTML = '❌ Supabase library not loaded';
+                return;
+            }
+            
+            try {
+                const client = window.supabase.createClient(
+                    window.SHERIFF_SUPABASE.url,
+                    window.SHERIFF_SUPABASE.key
+                );
+                
+                statusEl.innerHTML = '✅ Client created successfully<br>';
+                
+                // Test connection
+                const { data, error } = await client
+                    .from('reviews')
+                    .select('count')
+                    .eq('is_approved', true);
+                
+                if (error) {
+                    statusEl.innerHTML += `❌ Database error: ${error.message}`;
+                    console.error('Database error:', error);
+                } else {
+                    statusEl.innerHTML += `✅ Database connected! Found reviews: ${JSON.stringify(data)}`;
+                }
+                
+            } catch (err) {
+                statusEl.innerHTML = `❌ Connection error: ${err.message}`;
+                console.error('Connection error:', err);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reviews Test - Public vs CMS Access</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { 
+            border: 1px solid #ddd; 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 8px; 
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .warning { color: #f39c12; }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #3498db;
+            color: white;
+        }
+        button:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+    <h1>Recenzie - Test verejného vs CMS prístupu</h1>
+
+    <div class="test-section">
+        <h2>1. Test konfigurácie</h2>
+        <button onclick="testConfig()">Test Config</button>
+        <div id="configResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test verejného prístupu (ako anon user)</h2>
+        <button onclick="testPublicAccess()">Test Public Access</button>
+        <div id="publicResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test všetkých recenzií (ako by ich videl CMS)</h2>
+        <button onclick="testAllReviews()">Test All Reviews</button>
+        <div id="allResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test funkcií z reviews.js</h2>
+        <button onclick="testReviewsFunctions()">Test Reviews Functions</button>
+        <div id="functionsResult"></div>
+    </div>
+
+    <script src="/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="scripts/reviews.js"></script>
+    
+    <script>
+        let supabaseClient = null;
+
+        function testConfig() {
+            const result = document.getElementById('configResult');
+            
+            const tests = [
+                {
+                    name: 'SHERIFF_SUPABASE config',
+                    test: () => !!window.SHERIFF_SUPABASE && !!window.SHERIFF_SUPABASE.url && !!window.SHERIFF_SUPABASE.key
+                },
+                {
+                    name: 'Supabase library',
+                    test: () => !!window.supabase && !!window.supabase.createClient
+                },
+                {
+                    name: 'Reviews.js functions',
+                    test: () => typeof getSupabaseClient === 'function'
+                }
+            ];
+
+            const results = tests.map(test => {
+                const passed = test.test();
+                return `<li class="${passed ? 'success' : 'error'}">${test.name}: ${passed ? '✅ OK' : '❌ FAIL'}</li>`;
+            }).join('');
+
+            result.innerHTML = `<ul>${results}</ul>`;
+
+            // Initialize client if config is OK
+            if (tests[0].test() && tests[1].test()) {
+                supabaseClient = window.supabase.createClient(
+                    window.SHERIFF_SUPABASE.url,
+                    window.SHERIFF_SUPABASE.key
+                );
+                result.innerHTML += '<p class="success">✅ Supabase client created</p>';
+            }
+        }
+
+        async function testPublicAccess() {
+            const result = document.getElementById('publicResult');
+            result.innerHTML = '<p>🔄 Testing...</p>';
+
+            try {
+                if (!supabaseClient) {
+                    throw new Error('Supabase client not initialized. Run Config test first.');
+                }
+
+                // Test as anonymous user (public access)
+                const { data, error } = await supabaseClient
+                    .from('reviews')
+                    .select('*')
+                    .eq('is_approved', true)
+                    .order('date_created', { ascending: false });
+
+                if (error) {
+                    throw error;
+                }
+
+                const approvedCount = data ? data.length : 0;
+                
+                result.innerHTML = `
+                    <p class="success">✅ Verejný prístup funguje!</p>
+                    <p>Nájdené schválené recenzie: <strong>${approvedCount}</strong></p>
+                    ${approvedCount > 0 ? 
+                        `<details>
+                            <summary>Zobraziť recenzie</summary>
+                            ${data.map(review => 
+                                `<div style="border: 1px solid #eee; margin: 10px 0; padding: 10px;">
+                                    <h4>${review.customer_name} - ${'⭐'.repeat(review.rating)}</h4>
+                                    <p>${review.review_text}</p>
+                                    <small>ID: ${review.id} | Dátum: ${new Date(review.date_created).toLocaleString('sk-SK')}</small>
+                                </div>`
+                            ).join('')}
+                        </details>` 
+                        : '<p class="warning">⚠️ Žiadne schválené recenzie v databáze</p>'
+                    }
+                `;
+
+            } catch (err) {
+                console.error('Public access error:', err);
+                result.innerHTML = `
+                    <p class="error">❌ Chyba pri verejnom prístupe</p>
+                    <p><strong>Error:</strong> ${err.message}</p>
+                    <p><strong>Code:</strong> ${err.code || 'N/A'}</p>
+                    <details>
+                        <summary>Error details</summary>
+                        <pre>${JSON.stringify(err, null, 2)}</pre>
+                    </details>
+                `;
+            }
+        }
+
+        async function testAllReviews() {
+            const result = document.getElementById('allResult');
+            result.innerHTML = '<p>🔄 Testing...</p>';
+
+            try {
+                if (!supabaseClient) {
+                    throw new Error('Supabase client not initialized. Run Config test first.');
+                }
+
+                // Test access to all reviews (not just approved)
+                const { data: allData, error: allError } = await supabaseClient
+                    .from('reviews')
+                    .select('*')
+                    .order('date_created', { ascending: false });
+
+                if (allError) {
+                    throw allError;
+                }
+
+                const totalCount = allData ? allData.length : 0;
+                const approvedCount = allData ? allData.filter(r => r.is_approved).length : 0;
+                const pendingCount = totalCount - approvedCount;
+                
+                result.innerHTML = `
+                    <p class="success">✅ Prístup ku všetkým recenziam funguje!</p>
+                    <p>Celkovo recenzií: <strong>${totalCount}</strong></p>
+                    <p>Schválené: <strong>${approvedCount}</strong> | Čakajúce: <strong>${pendingCount}</strong></p>
+                    ${totalCount > 0 ? 
+                        `<details>
+                            <summary>Zobraziť všetky recenzie</summary>
+                            ${allData.map(review => 
+                                `<div style="border: 1px solid ${review.is_approved ? '#27ae60' : '#f39c12'}; margin: 10px 0; padding: 10px;">
+                                    <h4>${review.customer_name} - ${'⭐'.repeat(review.rating)} ${review.is_approved ? '✅' : '⏳'}</h4>
+                                    <p>${review.review_text}</p>
+                                    <small>ID: ${review.id} | Status: ${review.is_approved ? 'Approved' : 'Pending'} | Dátum: ${new Date(review.date_created).toLocaleString('sk-SK')}</small>
+                                </div>`
+                            ).join('')}
+                        </details>` 
+                        : '<p class="warning">⚠️ Žiadne recenzie v databáze</p>'
+                    }
+                `;
+
+            } catch (err) {
+                console.error('All reviews access error:', err);
+                result.innerHTML = `
+                    <p class="error">❌ Chyba pri prístupe ku všetkým recenziam</p>
+                    <p><strong>Error:</strong> ${err.message}</p>
+                    <p><strong>Code:</strong> ${err.code || 'N/A'}</p>
+                    <details>
+                        <summary>Error details</summary>
+                        <pre>${JSON.stringify(err, null, 2)}</pre>
+                    </details>
+                `;
+            }
+        }
+
+        async function testReviewsFunctions() {
+            const result = document.getElementById('functionsResult');
+            result.innerHTML = '<p>🔄 Testing...</p>';
+
+            try {
+                // Test getSupabaseClient function from reviews.js
+                if (typeof getSupabaseClient !== 'function') {
+                    throw new Error('getSupabaseClient function not available from reviews.js');
+                }
+
+                const client = await getSupabaseClient();
+                if (!client) {
+                    throw new Error('getSupabaseClient returned null');
+                }
+
+                // Test getFiveStarReviews function
+                if (typeof getFiveStarReviews !== 'function') {
+                    throw new Error('getFiveStarReviews function not available from reviews.js');
+                }
+
+                const fiveStarReviews = await getFiveStarReviews(3);
+                
+                result.innerHTML = `
+                    <p class="success">✅ Funkcie z reviews.js fungujú!</p>
+                    <p>5-hviezdičkové recenzie: <strong>${fiveStarReviews ? fiveStarReviews.length : 0}</strong></p>
+                    ${fiveStarReviews && fiveStarReviews.length > 0 ? 
+                        `<details>
+                            <summary>Zobraziť 5-star recenzie</summary>
+                            ${fiveStarReviews.map(review => 
+                                `<div style="border: 1px solid #f39c12; margin: 10px 0; padding: 10px;">
+                                    <h4>${review.customer_name} - ${'⭐'.repeat(review.rating)}</h4>
+                                    <p>${review.review_text}</p>
+                                    <small>Dátum: ${new Date(review.date_created).toLocaleString('sk-SK')}</small>
+                                </div>`
+                            ).join('')}
+                        </details>` 
+                        : '<p class="warning">⚠️ Žiadne 5-hviezdičkové recenzie</p>'
+                    }
+                `;
+
+            } catch (err) {
+                console.error('Functions test error:', err);
+                result.innerHTML = `
+                    <p class="error">❌ Chyba pri testovaní funkcií</p>
+                    <p><strong>Error:</strong> ${err.message}</p>
+                    <details>
+                        <summary>Error details</summary>
+                        <pre>${JSON.stringify(err, null, 2)}</pre>
+                    </details>
+                `;
+            }
+        }
+
+        // Auto-run config test on load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(testConfig, 500);
+        });
+    </script>
+</body>
+</html>

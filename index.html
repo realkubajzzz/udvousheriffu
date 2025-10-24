@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>U Dvou Sheriffů</title>
+  <title>U Dvou Šerifů</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png">
   <link rel="stylesheet" href="styles/styles.css">
@@ -15,22 +15,45 @@
     }
   </script>
   <script defer src="scripts/main.js"></script>
+  <script>
+    // Debug script for actions
+    window.addEventListener('load', function() {
+      setTimeout(() => {
+        console.log('[DEBUG] Checking actions elements...');
+        const homeGrid = document.getElementById('homeActionsGrid');
+        console.log('[DEBUG] homeActionsGrid element:', homeGrid);
+        console.log('[DEBUG] homeActionsGrid innerHTML:', homeGrid ? homeGrid.innerHTML : 'NOT FOUND');
+        
+        console.log('[DEBUG] Supabase config:', window.SHERIFF_SUPABASE);
+        console.log('[DEBUG] Supabase client:', window.createClient);
+        console.log('[DEBUG] initSupabaseActions function:', typeof window.initSupabaseActions);
+        
+        if (typeof window.initSupabaseActions === 'function') {
+          console.log('[DEBUG] Manually calling initSupabaseActions...');
+          window.initSupabaseActions().catch(err => {
+            console.error('[DEBUG] Manual call failed:', err);
+          });
+        }
+      }, 2000);
+    });
+  </script>
   </head>
   <body>
     <header class="site-header">
       <div class="container header-inner">
   <a class="brand" href="index.html">
-          <img src="assets/logo.png" alt="U Dvou Sheriffů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
-          <span class="brand-text">U Dvou Sheriffů</span>
+          <img src="assets/logo.png" alt="U Dvou Šerifů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
+          <span class="brand-text">U Dvou Šerifů</span>
         </a>
         <nav class="nav" id="nav">
           <a href="index.html">Domov</a>
           <a href="menu.html">Menu</a>
           <a href="akcie.html">Akcie</a>
-          <a href="rezervace.html">Rezervace</a>
-          <a href="kontakt.html">Kontakt</a>
-          <a href="about.html">O nás</a>
+          <a href="rezervace.html">Rezervacie</a>
           <a href="galeria.html">Galerie</a>
+          <a href="recenzie.html">Recenzie</a>
+          <a href="about.html">O nás</a>
+          <a href="kontakt.html">Kontakt</a>
         </nav>
         <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
       </div>
@@ -39,68 +62,100 @@
     <main>
       <section class="hero">
         <div class="container">
-          <h1>Vítejte v restauraci U Dvou Sheriffů</h1>
+          <h1>Vítejte v restauraci U Dvou Šerifů</h1>
           <p class="sub">Čistý design, poctivá kuchyně a příjemná atmosféra v centru města.</p>
           <p class="hero-cta"><a class="btn" href="menu.html">Prohlédnout menu</a> <a class="btn ghost" href="redirects/rezervace.html" target="_blank" rel="noopener">Rezervovat stůl</a></p>
         </div>
       </section>
-      
-      <!-- carousel moved below Aktuální akce -->
-
-      <section class="features container">
-        <article class="card reveal">
-          <h3>Sezónní suroviny</h3>
-          <p>Lokální a čerstvé suroviny připravené s respektem k chutím.</p>
-        </article>
-        <article class="card reveal">
-          <h3>Elegantní prostředí</h3>
-          <p>Minimalistický interiér, který nechá vyniknout jídlo.</p>
-        </article>
-        <article class="card reveal">
-          <h3>Přátelský servis</h3>
-          <p>Osobní přístup a doporučení od zkušeného týmu.</p>
-        </article>
-      </section>
-
-      <section class="specials container reveal">
-        <h2>Aktuální akce</h2>
-        <div class="grid">
-          <div class="media">
-            <div class="media-img" aria-hidden="true"></div>
-            <div>
-              <h4>Rychlé obědy</h4>
-              <p>Po-Pá 11:00–14:00 — speciální menu za zvýhodněné ceny.</p>
+      <!-- O nás sekcia hneď po Vítejte -->
+      <section class="about-preview reveal">
+        <div class="container">
+          <h2>O naší hospodě</h2>
+          <div class="about-content">
+            <div class="about-text">
+              <p class="lead">U Dvou Šerifů je místo, kde se potkávají dobří lidé při poctivém jídle a skvělé atmosféře. Naše hospoda kombinuje tradiční českou pohostinnost s moderním komfortem.</p>
+              <p>Dva „šerifové" — majitel a obchodní ředitel — se starají o to, aby každý host odcházel spokojený. Ať už přijdete na oběd, večeři nebo jen na pivo s přáteli, najdete u nás teplo domova a kvalitu, na kterou se můžete spolehnout.</p>
+              <a href="about.html" class="btn-simple">Více o nás</a>
             </div>
-          </div>
-          <div class="media">
-            <div class="media-img small" aria-hidden="true"></div>
-            <div>
-              <h4>Degustační večery</h4>
-              <p>Rezervace pro menší skupiny — menu na vyžádání.</p>
+            <div class="about-features">
+              <div class="feature-item">
+                <span class="feature-icon">🍺</span>
+                <h4>Poctivé pivo</h4>
+                <p>Čerstvě točené české pivo</p>
+              </div>
+              <div class="feature-item">
+                <span class="feature-icon">🍖</span>
+                <h4>Tradiční kuchyně</h4>
+                <p>Domácí jídla podle receptů</p>
+              </div>
+              <div class="feature-item">
+                <span class="feature-icon">🎵</span>
+                <h4>Živá atmosféra</h4>
+                <p>Pravidelné akce a hudba</p>
+              </div>
             </div>
           </div>
         </div>
-  <p class="more"><a href="akcie.html">Více o akcích →</a></p>
       </section>
-      <section class="carousel-section container reveal" aria-label="Fotogalerie - rychlý přehled">
-        <h2>Okamžiky z hospody</h2>
-        <div class="carousel" id="homeCarousel">
-          <button class="car-btn left" id="carPrev" aria-label="Předchozí">◀</button>
-          <div class="car-track" id="carTrack">
-            <!-- Carousel images loaded dynamically from Supabase (max 15) -->
-            <img src="assets/images/home/20251015_230947.png" alt="Momentka 1">
-            <img src="assets/images/home/FiveM_by_Cfx.re_18._10._2025_21_09_56.png" alt="Momentka 2">
-            <img src="assets/images/home/Snimka_obrazovky_1240.png" alt="Momentka 3">
+
+      <!-- Aktuální akce -->
+      <section class="specials container reveal">
+        <h2>Aktuální akce</h2>
+        <div id="homeActionsGrid" class="grid">
+          <!-- Actions loaded dynamically from CMS -->
+          <p class="loading-actions">Načítavam akcie...</p>
+        </div>
+        <div class="more">
+          <a href="akcie.html" class="btn-simple">Více o akcích</a>
+        </div>
+      </section>
+
+      <!-- Recenzie sekcia -->
+      <section class="reviews-section reveal">
+        <div class="container">
+          <h2>Co o nás říkají naši hosté</h2>
+          <div class="reviews-grid" id="homeReviewsGrid">
+            <!-- 5-star reviews will be loaded here dynamically -->
+            <div class="review-card loading">
+              <div class="loading-placeholder">
+                <div class="loading-stars">⭐⭐⭐⭐⭐</div>
+                <p>Načítavam recenzie...</p>
+              </div>
+            </div>
           </div>
-          <button class="car-btn right" id="carNext" aria-label="Další">▶</button>
+          <div class="reviews-cta">
+            <a href="recenzie.html" class="btn btn-outline">Zobrazit všechny recenze</a>
+          </div>
         </div>
       </section>
     </main>
 
     <footer class="site-footer">
-      <div class="container footer-inner">
-        <small>© U Dvou Sheriffů — všechny práva vyhrazena</small>
-        <div class="footer-links">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <img src="assets/logo.png" alt="U Dvou Šerifů" class="footer-logo">
+            <h4>U Dvou Šerifů</h4>
+          </div>
+          
+          <ul class="footer-links">
+            <li><a href="index.html">Domů</a></li>
+            <li><a href="menu.html">Menu</a></li>
+            <li><a href="akcie.html">Akce</a></li>
+            <li><a href="rezervace.html">Rezervace</a></li>
+            <li><a href="galeria.html">Galerie</a></li>
+            <li><a href="about.html">O nás</a></li>
+            <li><a href="kontakt.html">Kontakt</a></li>
+          </ul>
+
+          <div class="footer-contact">
+            <p>📍 Panorama Drive, Sandy Shores</p>
+            <p>📞 638 654 405</p>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <p>&copy; 2025 U Dvou Šerifů. Všechna práva vyhrazena.</p>
         </div>
       </div>
     </footer>

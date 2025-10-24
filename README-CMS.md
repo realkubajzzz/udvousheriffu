@@ -1,8 +1,8 @@
-# CMS Systém pre U Dvou Sheriffů
+# CMS Systém pre U Dvou Šerifů
 
 ## 📋 Prehľad
 
-Kompletný Content Management System pre správu obsahu webu U Dvou Sheriffů s bezpečným prihlasovaním a administráciou cez Supabase databázu.
+Kompletný Content Management System pre správu obsahu webu U Dvou Šerifů s bezpečným prihlasovaním a administráciou cez Supabase databázu.
 
 ## 🚀 Inštalácia
 

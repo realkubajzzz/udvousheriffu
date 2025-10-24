@@ -16,6 +16,23 @@ document.addEventListener('DOMContentLoaded', ()=>{
     });
   },{threshold:0.08});
   document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+  
+  // Ensure actions are loaded if containers exist
+  setTimeout(() => {
+    const homeActionsGrid = document.getElementById('homeActionsGrid');
+    const actionsList = document.getElementById('actionsList');
+    const homeReviewsGrid = document.getElementById('homeReviewsGrid');
+    
+    if ((homeActionsGrid || actionsList) && typeof initSupabaseActions === 'function') {
+      console.log('[MAIN] Ensuring actions are loaded...');
+      initSupabaseActions().catch(err => console.error('[MAIN] Actions loading failed:', err));
+    }
+    
+    if (homeReviewsGrid && typeof initHomeReviews === 'function') {
+      console.log('[MAIN] Ensuring reviews are loaded...');
+      initHomeReviews().catch(err => console.error('[MAIN] Reviews loading failed:', err));
+    }
+  }, 500);
 });
 
 // Open/closed status updater
@@ -76,6 +93,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
   
   // Initialize Supabase menu loading for menu page
   try { initSupabaseMenu && initSupabaseMenu(); } catch(e){ console.warn('Supabase menu init failed', e); }
+  
+  // Initialize Supabase actions loading for homepage and actions page
+  try { initSupabaseActions && initSupabaseActions(); } catch(e){ console.warn('Supabase actions init failed', e); }
 });
 
 // Fallback: if no Supabase configured, use local SSE endpoint at /server/status_sse.php
@@ -224,10 +244,11 @@ async function initSupabaseGallery(){
   const client = createClient(cfg.url, cfg.key);
   
   try{
-    // Fetch all gallery images ordered by created_at desc
+    // Fetch all gallery images ordered by sort_order and created_at
     const { data, error } = await client
       .from('gallery')
       .select('*')
+      .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false });
     
     if(error) throw error;
@@ -305,10 +326,11 @@ async function initSupabaseHomeCarousel(){
   const client = createClient(cfg.url, cfg.key);
   
   try{
-    // Fetch up to 15 gallery images ordered by created_at desc
+    // Fetch up to 15 gallery images ordered by sort_order and created_at
     const { data, error } = await client
       .from('gallery')
       .select('*')
+      .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
       .limit(15);
     
@@ -398,23 +420,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   })();
 });
 
-// Homepage carousel controls
-document.addEventListener('DOMContentLoaded', ()=>{
-  const track = document.getElementById('carTrack');
-  const prev = document.getElementById('carPrev');
-  const next = document.getElementById('carNext');
-  if(!track || !prev || !next) return;
-
-  const step = 240; // px per click (image width + gap)
-  prev.addEventListener('click', ()=>{ track.scrollBy({left: -step, behavior: 'smooth'}); });
-  next.addEventListener('click', ()=>{ track.scrollBy({left: step, behavior: 'smooth'}); });
-
-  // Keyboard support when carousel is focused
-  document.addEventListener('keydown', (e)=>{
-    if(e.key === 'ArrowLeft') prev.click();
-    if(e.key === 'ArrowRight') next.click();
-  });
-});
+// Removed old carousel controls - infinite scroll controls are handled in the main carousel function below
 
 // Infinite autoplay carousel with pause-on-hover and lightbox integration
 document.addEventListener('DOMContentLoaded', ()=>{
@@ -425,7 +431,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   let paused = false;
   let originalCount = 0;
   let originalWidth = 0;
-  const pixelsPerSecond = 100;
+  const pixelsPerSecond = 50; // Znížená rýchlosť pre plynulejší chod
 
   // make all carousel images clickable for lightbox (works with ensureLightbox)
   function attachCarouselToLightbox(){
@@ -444,7 +450,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   function initializeCarousel(){
     // Stop any running animation
-    if(rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    if(rafId) { 
+      cancelAnimationFrame(rafId); 
+      rafId = null; 
+    }
+    
+    // Prevent multiple initializations
+    if(track.dataset.carouselInitialized === 'true') {
+      return;
+    }
     
     attachCarouselToLightbox();
 
@@ -472,19 +486,34 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
     let lastTime = null;
     function step(t){
-      if(paused){ lastTime = t; rafId = requestAnimationFrame(step); return; }
+      if(paused){ 
+        lastTime = t; 
+        rafId = requestAnimationFrame(step); 
+        return; 
+      }
       if(!lastTime) lastTime = t;
+      
       // clamp dt to avoid jumps when tab was backgrounded
       let dt = (t - lastTime)/1000;
       if(dt > 0.25) dt = 0.25;
       lastTime = t;
-      const delta = pixelsPerSecond * dt;
-      // apply a tiny easing to smooth perceived motion (not required but helps)
+      
+      // Smoother animation with easing
+      const delta = pixelsPerSecond * dt * 0.8; // Pridané jemné zpomalenie
       track.scrollLeft += delta;
+      
       if(track.scrollLeft >= originalWidth){
         track.scrollLeft -= originalWidth; // loop
       }
-      rafId = requestAnimationFrame(step);
+      
+      // Throttle animation frame rate for better performance
+      if(dt > 1/45) { // Max 45 FPS instead of 60
+        rafId = requestAnimationFrame(step);
+      } else {
+        setTimeout(() => {
+          rafId = requestAnimationFrame(step);
+        }, 5);
+      }
     }
 
     function startAuto(){ if(!rafId){ lastTime = null; rafId = requestAnimationFrame(step); } }
@@ -496,13 +525,60 @@ document.addEventListener('DOMContentLoaded', ()=>{
     track.addEventListener('focusin', ()=>{ paused = true; });
     track.addEventListener('focusout', ()=>{ paused = false; });
 
-    // Manual controls should pause auto for a short time
+    // Manual controls with infinite scroll support
     const prev = document.getElementById('carPrev');
     const next = document.getElementById('carNext');
     let manualPauseTimer = null;
-    function manualPause(){ paused = true; clearTimeout(manualPauseTimer); manualPauseTimer = setTimeout(()=>{ paused = false; }, 1200); }
-    if(prev) prev.addEventListener('click', manualPause);
-    if(next) next.addEventListener('click', manualPause);
+    
+    function manualPause(){ 
+      paused = true; 
+      clearTimeout(manualPauseTimer); 
+      manualPauseTimer = setTimeout(()=>{ paused = false; }, 1200); 
+    }
+    
+    function scrollPrev() {
+      const step = 240; // image width + gap
+      let newPosition = track.scrollLeft - step;
+      
+      // Handle infinite loop - if we go below 0, loop to the end
+      if (newPosition < 0) {
+        newPosition = originalWidth + newPosition; // Loop to end but maintain relative position
+      }
+      
+      track.scrollTo({
+        left: newPosition,
+        behavior: 'smooth'
+      });
+      manualPause();
+    }
+    
+    function scrollNext() {
+      const step = 240; // image width + gap  
+      let newPosition = track.scrollLeft + step;
+      
+      // Handle infinite loop - if we exceed originalWidth, loop back to start
+      if (newPosition >= originalWidth) {
+        newPosition = newPosition - originalWidth; // Loop to beginning but maintain relative position  
+      }
+      
+      track.scrollTo({
+        left: newPosition,
+        behavior: 'smooth'
+      });
+      manualPause();
+    }
+    
+    if(prev) prev.addEventListener('click', scrollPrev);
+    if(next) next.addEventListener('click', scrollNext);
+    
+    // Keyboard support with infinite scroll - global when carousel is focused
+    const carousel = document.getElementById('homeCarousel');
+    if(carousel) {
+      carousel.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowLeft') { e.preventDefault(); scrollPrev(); }
+        if(e.key === 'ArrowRight') { e.preventDefault(); scrollNext(); }
+      });
+    }
 
     // Also allow dragging/scroll interactions to pause
     let isDown = false; let startX=0; let scrollStart=0;
@@ -518,12 +594,19 @@ document.addEventListener('DOMContentLoaded', ()=>{
       if(window.sheriffOpenLightbox) window.sheriffOpenLightbox(img.src, img.alt);
     });
 
+    // Mark as initialized
+    track.dataset.carouselInitialized = 'true';
+    
     // start autoplay
     startAuto();
   }
 
   // Expose reinitialize function for Supabase carousel loading
-  window.reinitializeCarousel = initializeCarousel;
+  window.reinitializeCarousel = function() {
+    // Reset initialization flag and reinitialize
+    track.dataset.carouselInitialized = 'false';
+    initializeCarousel();
+  };
 
   // Initialize carousel with existing content (local images)
   initializeCarousel();
@@ -611,3 +694,419 @@ async function initSupabaseMenu(){
     menuContainer.innerHTML = '<p class="menu-error">Chyba při načítání menu.</p>';
   }
 }
+
+// Helper functions for actions
+function createHomeActionCard(action) {
+  console.log('[DEBUG] Creating home action card for:', action);
+  
+  const card = document.createElement('div');
+  card.className = 'action-card-home reveal visible';
+  card.style.cursor = 'pointer';
+  
+  // Add click handler to redirect to actions page
+  card.addEventListener('click', function() {
+    window.location.href = 'akcie.html';
+  });
+  
+  // Calculate status and days
+  const statusInfo = getActionStatus(action);
+  
+  const dateRange = (action.start_date || action.end_date) ? 
+    `<p class="card-date">${formatDateRange(action.start_date, action.end_date)}</p>` : '';
+  
+  const cardHTML = `
+    <div class="status-indicator ${statusInfo.class}">${statusInfo.text}</div>
+    <div class="card-content">
+      <div class="card-text">
+        <h4>${action.title || 'Bez názvu'} <span class="click-hint">→</span></h4>
+        <p>${action.description || 'Bez popisu'}</p>
+        ${dateRange}
+      </div>
+    </div>
+  `;
+  
+  card.innerHTML = cardHTML;
+  console.log('[DEBUG] Home card HTML:', cardHTML);
+  
+  return card;
+}
+
+function createFullActionCard(action) {
+  console.log('[DEBUG] Creating full action card for:', action);
+  
+  const card = document.createElement('article');
+  card.className = 'action-card reveal visible';
+  
+  // Calculate status and days
+  const statusInfo = getActionStatus(action);
+  
+  const imageHTML = action.image_url ? 
+    `<img src="${action.image_url}" alt="${action.title}" class="action-image">` : 
+    '<div class="action-image" style="background:linear-gradient(135deg,#efe3d8,#f7f3ef);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;">Bez obrázku</div>';
+  
+  const dateRange = (action.start_date || action.end_date) ? 
+    `<div class="date-status-row">
+      <span class="action-date">${formatDateRange(action.start_date, action.end_date)}</span>
+      <div class="status-indicator ${statusInfo.class}">${statusInfo.text}</div>
+    </div>` : 
+    `<div class="date-status-row">
+      <span class="action-date"></span>
+      <div class="status-indicator ${statusInfo.class}">${statusInfo.text}</div>
+    </div>`;
+  
+  const cardHTML = `
+    ${imageHTML}
+    <div class="action-content">
+      ${dateRange}
+      <h3>${action.title || 'Bez názvu'}</h3>
+      <p>${action.description || 'Bez popisu'}</p>
+    </div>
+  `;
+  
+  card.innerHTML = cardHTML;
+  console.log('[DEBUG] Full card HTML:', cardHTML);
+  
+  return card;
+}
+
+function getActionStatus(action) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  if (!action.start_date) {
+    return { class: 'active', text: 'Aktívna' };
+  }
+  
+  const startDate = new Date(action.start_date);
+  const endDate = action.end_date ? new Date(action.end_date) : startDate;
+  
+  // Normalize dates to start of day for comparison
+  const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  
+  if (today > endDay) {
+    return { class: 'expired', text: 'Prebehlo' };
+  } else if (today >= startDay && today <= endDay) {
+    return { class: 'active', text: 'Aktívna' };
+  } else {
+    // Calculate days until start
+    const diffTime = startDay - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+      return { class: 'upcoming', text: 'Zajtra' };
+    } else if (diffDays <= 7) {
+      return { class: 'upcoming', text: `Za ${diffDays} dní` };
+    } else {
+      return { class: 'upcoming', text: `Za ${diffDays} dní` };
+    }
+  }
+}
+
+function shouldShowAction(action) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  if (!action.start_date) {
+    return true; // Show actions without dates
+  }
+  
+  const startDate = new Date(action.start_date);
+  const endDate = action.end_date ? new Date(action.end_date) : startDate;
+  
+  // Normalize dates to start of day for comparison
+  const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  
+  // Calculate days since end
+  const diffTime = today - endDay;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  // Hide actions that ended more than 3 days ago
+  return diffDays <= 3;
+}
+
+function sortActionsByStatus(actions) {
+  return actions.sort((a, b) => {
+    const statusA = getActionStatus(a);
+    const statusB = getActionStatus(b);
+    
+    // Define priority: expired (0), active (1), upcoming (2)
+    const priorityOrder = { 'expired': 0, 'active': 1, 'upcoming': 2 };
+    
+    const priorityA = priorityOrder[statusA.class] || 1;
+    const priorityB = priorityOrder[statusB.class] || 1;
+    
+    return priorityA - priorityB;
+  });
+}
+
+function formatDateRange(startDate, endDate) {
+  const options = { day: 'numeric', month: 'numeric', year: 'numeric' };
+  
+  if (startDate && endDate) {
+    const start = new Date(startDate).toLocaleDateString('cs-CZ', options);
+    const end = new Date(endDate).toLocaleDateString('cs-CZ', options);
+    return `${start} - ${end}`;
+  } else if (startDate && !endDate) {
+    // Single day event
+    return new Date(startDate).toLocaleDateString('cs-CZ', options);
+  } else if (startDate) {
+    return `Od ${new Date(startDate).toLocaleDateString('cs-CZ', options)}`;
+  } else if (endDate) {
+    return `Do ${new Date(endDate).toLocaleDateString('cs-CZ', options)}`;
+  }
+  return '';
+}
+
+// Load actions from Supabase CMS
+async function initSupabaseActions(){
+  const homeActionsGrid = document.getElementById('homeActionsGrid');
+  const actionsPageList = document.getElementById('actionsList');
+  
+  // Skip if neither container exists
+  if (!homeActionsGrid && !actionsPageList) return;
+  
+  const cfg = window.SHERIFF_SUPABASE || {};
+  if(!cfg.url || !cfg.key) {
+    console.warn('Supabase not configured, actions will remain empty');
+    return;
+  }
+
+  const createClient = window.createClient || (window.supabase && window.supabase.createClient) || (window.Supabase && window.Supabase.createClient);
+  if(!createClient){
+    console.warn('Supabase client not found. Actions will remain empty.');
+    return;
+  }
+
+  const client = createClient(cfg.url, cfg.key);
+  
+  try{
+    console.log('[Website] Loading actions from database...');
+    // Fetch active actions ordered by sort_order and created_at desc
+    const { data, error } = await client
+      .from('cms_actions')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
+    
+    if(error) {
+      console.error('[Website] Database error:', error);
+      console.error('[Website] Error details:', error.message, error.code);
+      
+      // Show error in UI instead of throwing
+      if(homeActionsGrid) {
+        homeActionsGrid.innerHTML = '<p class="actions-error">Chyba načítavania akcií. Skontrolujte databázové oprávnenia.</p>';
+      }
+      if(actionsPageList) {
+        actionsPageList.innerHTML = '<p class="actions-error">Chyba načítavania akcií. Skontrolujte databázové oprávnenia.</p>';
+      }
+      return;
+    }
+    
+    console.log('[Website] Actions loaded:', data?.length || 0);
+    
+    // Load actions for homepage (max 3)
+    if(homeActionsGrid) {
+      console.log('[Website] Processing homepage actions, grid element:', homeActionsGrid);
+      homeActionsGrid.innerHTML = '';
+      
+      if(!data || data.length === 0){
+        console.log('[Website] No actions data, showing no-actions message');
+        homeActionsGrid.innerHTML = '<p class="no-actions">Momentálně žádné akce.</p>';
+      } else {
+        console.log('[Website] Processing', data.length, 'actions for homepage');
+        // Filter actions by 3-day rule, sort by status, and take max 3
+        const filteredActions = data.filter(shouldShowAction);
+        const sortedActions = sortActionsByStatus(filteredActions);
+        const homeActions = sortedActions.slice(0, 3);
+        
+        if (homeActions.length === 0) {
+          homeActionsGrid.innerHTML = '<p class="no-actions">Momentálně žádné akce.</p>';
+        } else {
+          homeActions.forEach((action, index) => {
+            console.log(`[Website] Adding homepage action ${index + 1}:`, action);
+            const card = createHomeActionCard(action);
+            homeActionsGrid.appendChild(card);
+          });
+        }
+        console.log('[Website] Homepage actions HTML after processing:', homeActionsGrid.innerHTML);
+      }
+    }
+    
+    // Load actions for actions page (all)
+    if(actionsPageList) {
+      console.log('[Website] Processing actions page, list element:', actionsPageList);
+      actionsPageList.innerHTML = '';
+      
+      if(!data || data.length === 0){
+        console.log('[Website] No actions data, showing no-actions message');
+        actionsPageList.innerHTML = '<p class="no-actions">Momentálně žádné akce.</p>';
+      } else {
+        console.log('[Website] Processing', data.length, 'actions for actions page');
+        // Filter actions by 3-day rule
+        const filteredActions = data.filter(shouldShowAction);
+        
+        if (filteredActions.length === 0) {
+          actionsPageList.innerHTML = '<p class="no-actions">Momentálně žádné akce.</p>';
+        } else {
+          filteredActions.forEach((action, index) => {
+            console.log(`[Website] Adding actions page action ${index + 1}:`, action);
+            const card = createFullActionCard(action);
+            actionsPageList.appendChild(card);
+          });
+        }
+        console.log('[Website] Actions page HTML after processing:', actionsPageList.innerHTML);
+      }
+    }
+    
+    console.info(`[sheriff] Loaded ${data?.length || 0} actions from Supabase`);
+    
+    // Subscribe to actions table changes for realtime updates
+    if(typeof client.channel === 'function'){
+      const chan = client.channel('actions_channel')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cms_actions' }, () => {
+          initSupabaseActions(); // Reload on any change
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cms_actions' }, () => {
+          initSupabaseActions();
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cms_actions' }, () => {
+          initSupabaseActions();
+        })
+        .subscribe();
+    }
+    
+  } catch(err) {
+    console.error('Failed to load Supabase actions:', err);
+    if(homeActionsGrid) homeActionsGrid.innerHTML = '<p class="actions-error">Chyba při načítání akcí.</p>';
+    if(actionsPageList) actionsPageList.innerHTML = '<p class="actions-error">Chyba při načítání akcí.</p>';
+  }
+}
+
+// Make functions globally available for debugging
+window.initSupabaseActions = initSupabaseActions;
+
+// Initialize Reviews for Homepage
+async function initHomeReviews() {
+  console.log('[MAIN] Initializing homepage reviews...');
+  
+  const homeReviewsGrid = document.getElementById('homeReviewsGrid');
+  if (!homeReviewsGrid) {
+    console.log('[MAIN] No home reviews grid found');
+    return;
+  }
+
+  // Get Supabase client
+  const cfg = window.SHERIFF_SUPABASE || {};
+  if (!cfg.url || !cfg.key) {
+    console.error('[MAIN] Supabase config not found');
+    return;
+  }
+
+  const createClient = window.createClient || (window.supabase && window.supabase.createClient) || (window.Supabase && window.Supabase.createClient);
+  if (!createClient) {
+    console.error('[MAIN] Supabase createClient not found');
+    return;
+  }
+
+  const client = createClient(cfg.url, cfg.key);
+
+  try {
+    const { data, error } = await client
+      .from('reviews')
+      .select('*')
+      .eq('is_approved', true)
+      .eq('rating', 5)
+      .order('date_created', { ascending: false })
+      .limit(3);
+
+    if (error) throw error;
+
+    console.log('[MAIN] Loaded 5-star reviews:', data);
+
+    if (!data || data.length === 0) {
+      homeReviewsGrid.innerHTML = `
+        <div class="review-card">
+          <div class="review-stars">⭐⭐⭐⭐⭐</div>
+          <p>"Skvělá atmosféra a výborné jídlo! Personál je velmi milý a ochotný. Určitě se vrátíme."</p>
+          <div class="review-author">— Ukázkový zákazník</div>
+        </div>
+        <div class="review-card">
+          <div class="review-stars">⭐⭐⭐⭐⭐</div>
+          <p>"Nejlepší guláš ve městě! Domácí atmosféra a férové ceny. Doporučuji všem."</p>
+          <div class="review-author">— Spokojený host</div>
+        </div>
+        <div class="review-card">
+          <div class="review-stars">⭐⭐⭐⭐⭐</div>
+          <p>"Tradiční česká hospoda jak má být. Výborné pivo, chutné jídlo a příjemné prostředí."</p>
+          <div class="review-author">— Pravidelný návštěvník</div>
+        </div>
+      `;
+      return;
+    }
+
+    // Clear loading state
+    homeReviewsGrid.innerHTML = '';
+
+    // Display reviews (max 3 for homepage)
+    data.slice(0, 3).forEach(review => {
+      const reviewCard = createHomeReviewCard(review);
+      homeReviewsGrid.appendChild(reviewCard);
+    });
+
+    console.info(`[MAIN] Loaded ${data.length} 5-star reviews for homepage`);
+
+  } catch (err) {
+    console.error('[MAIN] Failed to load homepage reviews:', err);
+    homeReviewsGrid.innerHTML = '<p class="reviews-error">Chyba při načítání recenzí.</p>';
+  }
+}
+
+function createHomeReviewCard(review) {
+  const card = document.createElement('div');
+  card.className = 'review-card';
+  
+  const stars = '⭐'.repeat(5); // Always 5 stars for homepage display
+  
+  card.innerHTML = `
+    <div class="review-stars">${stars}</div>
+    <p>"${escapeHtml(review.review_text)}"</p>
+    <div class="review-author">— ${escapeHtml(review.customer_name)}</div>
+  `;
+  
+  return card;
+}
+
+// Utility function to escape HTML
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+// Make reviews function globally available
+window.initHomeReviews = initHomeReviews;
+
+// Debug actions loading
+window.addEventListener('load', function() {
+  console.log('[MAIN.JS] Page loaded, checking actions after load...');
+  
+  setTimeout(() => {
+    const homeGrid = document.getElementById('homeActionsGrid');
+    const actionsList = document.getElementById('actionsList');
+    
+    if (homeGrid) {
+      console.log('[MAIN.JS] Homepage actions final HTML:', homeGrid.innerHTML);
+    }
+    
+    if (actionsList) {
+      console.log('[MAIN.JS] Actions page final HTML:', actionsList.innerHTML);
+    }
+  }, 4000);
+});

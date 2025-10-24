@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CMS Login — U Dvou Sheriffů</title>
+  <title>CMS Login — U Dvou Šerifů</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png">
     <link rel="stylesheet" href="styles/styles.css">
@@ -16,8 +16,10 @@
         margin: 100px auto;
         padding: 2rem;
         background: var(--card);
+        border: 2px solid #ddd;
         border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(18,18,18,0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        position: relative;
       }
       .login-form {
         display: flex;
@@ -29,29 +31,46 @@
         flex-direction: column;
         gap: 0.5rem;
       }
+      .form-group label {
+        font-weight: 600;
+        color: #7a4f2e;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+      }
       .form-input {
         padding: 0.75rem;
-        border: 2px solid var(--border);
+        border: 2px solid #ccc;
         border-radius: 8px;
         font-size: 1rem;
-        transition: border-color 0.2s;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: border-color 0.2s, box-shadow 0.2s;
       }
       .form-input:focus {
         outline: none;
-        border-color: var(--primary);
+        border-color: #888;
+        box-shadow: 0 0 0 3px rgba(136, 136, 136, 0.2);
+      }
+      .form-input:hover {
+        border-color: #888;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       }
       .login-btn {
         padding: 0.75rem 1.5rem;
-        background: var(--primary);
+        background: #c6862a;
         color: white;
         border: none;
         border-radius: 8px;
         font-size: 1rem;
+        font-weight: bold;
         cursor: pointer;
         transition: background-color 0.2s;
+        box-shadow: 0 4px 12px rgba(198, 134, 42, 0.3);
       }
       .login-btn:hover {
-        background: var(--primary-dark);
+        background: #b5761f;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(198, 134, 42, 0.4);
       }
       .login-btn:disabled {
         background: var(--muted);
@@ -86,7 +105,7 @@
     <div class="login-container">
       <div class="login-header">
         <h1>CMS Prihlásenie</h1>
-        <p>Správa obsahu - U Dvou Sheriffů</p>
+  <p>Správa obsahu - U Dvou Šerifů</p>
       </div>
       
       <form class="login-form" id="loginForm">
@@ -256,6 +275,20 @@
           localStorage.setItem('cms_session_token', sessionToken);
           localStorage.setItem('cms_user_id', userData.id);
           localStorage.setItem('cms_username', userData.username);
+
+          // Log login activity
+          try {
+            await supabaseClient
+              .from('cms_audit_log')
+              .insert({
+                user_id: userData.id,
+                username: userData.username,
+                action: 'LOGIN',
+                table_name: 'cms_sessions'
+              });
+          } catch (logErr) {
+            console.warn('Failed to log login activity:', logErr);
+          }
 
           showMessage('Prihlásenie úspešné! Presmerovávam...', 'success');
           

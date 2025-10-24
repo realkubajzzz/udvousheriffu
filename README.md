@@ -1,6 +1,6 @@
-# U Dvou Sheriffů — static website
+# U Dvou Šerifů — static website
 
-This is a small static website mockup for the restaurant "U Dvou Sheriffů". It's intentionally database-free and uses a clean, Apple-like design with subtle animations.
+This is a small static website mockup for the restaurant "U Dvou Šerifů". It's intentionally database-free and uses a clean, Apple-like design with subtle animations.
 
 What is included
 - `index.html`, `menu.html`, `akcie.html`, `kontakt.html`, `about.html`, `rezervace.html` — pages

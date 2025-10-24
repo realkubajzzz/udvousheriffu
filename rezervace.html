@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Rezervace — U Dvou Sheriffů</title>
+  <title>Rezervace — U Dvou Šerifů</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png">
   <!-- No automatic redirect: page provides manual link to open the reservation channel -->
@@ -15,22 +15,23 @@
   </script>
   <script defer src="scripts/main.js"></script>
   </head>
-  <body>
+  <body class="page-short">
     <header class="site-header">
       <div class="container header-inner">
         <a class="brand" href="index.html">
-          <img src="assets/logo.png" alt="U Dvou Sheriffů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
-          <span class="brand-text">U Dvou Sheriffů</span>
+          <img src="assets/logo.png" alt="U Dvou Šerifů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
+          <span class="brand-text">U Dvou Šerifů</span>
         </a>
         
-        <nav class="nav">
+        <nav class="nav" id="nav">
           <a href="index.html">Domov</a>
           <a href="menu.html">Menu</a>
-          <a href="akcie.html">Akce</a>
-          <a href="rezervace.html" class="active">Rezervace</a>
-          <a href="kontakt.html">Kontakt</a>
-          <a href="about.html">O nás</a>
+          <a href="akcie.html">Akcie</a>
+          <a href="rezervace.html" class="active">Rezervacie</a>
           <a href="galeria.html">Galerie</a>
+          <a href="recenzie.html">Recenzie</a>
+          <a href="about.html">O nás</a>
+          <a href="kontakt.html">Kontakt</a>
         </nav>
         <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
       </div>
@@ -50,9 +51,33 @@
     </main>
 
     <footer class="site-footer">
-      <div class="container footer-inner">
-        <small>© U Dvou Sheriffů</small>
-        <div class="footer-links"></div>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <img src="assets/logo.png" alt="U Dvou Šerifů" class="footer-logo">
+            <h4>U Dvou Šerifů</h4>
+          </div>
+          
+          <ul class="footer-links">
+            <li><a href="index.html">Domů</a></li>
+            <li><a href="menu.html">Menu</a></li>
+            <li><a href="akcie.html">Akce</a></li>
+            <li><a href="rezervace.html">Rezervace</a></li>
+            <li><a href="galeria.html">Galerie</a></li>
+            <li><a href="recenzie.html">Recenze</a></li>
+            <li><a href="about.html">O nás</a></li>
+            <li><a href="kontakt.html">Kontakt</a></li>
+          </ul>
+
+          <div class="footer-contact">
+            <p>📍 Panorama Drive, Sandy Shores</p>
+            <p>📞 638 654 405</p>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <p>&copy; 2025 U Dvou Šerifů. Všechna práva vyhrazena.</p>
+        </div>
       </div>
     </footer>
   </body>

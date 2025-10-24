@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Public Reviews Access</title>
+</head>
+<body>
+    <h1>Test Public Reviews Access</h1>
+    <p>Tento test overuje, či sa recenzie načítavajú pre neoautentifikovaných užívateľov.</p>
+    
+    <button onclick="testPublicAccess()">Test načítania recenzií</button>
+    <button onclick="testHomeReviews()">Test home reviews funkcie</button>
+    
+    <div id="output"></div>
+
+    <script src="/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="scripts/main.js"></script>
+    <script>
+        async function testPublicAccess() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<h3>🔄 Testuje sa prístup k recenziam...</h3>';
+
+            try {
+                // Get Supabase client
+                const cfg = window.SHERIFF_SUPABASE || {};
+                if (!cfg.url || !cfg.key) {
+                    throw new Error('Supabase config not found');
+                }
+
+                const createClient = window.createClient || (window.supabase && window.supabase.createClient) || (window.Supabase && window.Supabase.createClient);
+                if (!createClient) {
+                    throw new Error('Supabase createClient not found');
+                }
+
+                const client = createClient(cfg.url, cfg.key);
+                console.log('Supabase client created successfully');
+
+                console.log('Testing reviews access...');
+                const { data, error } = await client
+                    .from('reviews')
+                    .select('*')
+                    .eq('is_approved', true)
+                    .order('date_created', { ascending: false });
+
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
+
+                console.log('Reviews data:', data);
+                
+                output.innerHTML = `
+                    <h3>✅ Úspešne načítané recenzie (${data ? data.length : 0})</h3>
+                    ${data && data.length > 0 ? `
+                        <div style="margin: 20px 0;">
+                            ${data.map(review => `
+                                <div style="border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 8px;">
+                                    <h4>${review.customer_name} - ${'⭐'.repeat(review.rating)}</h4>
+                                    <p>${review.review_text}</p>
+                                    <small>Schválené: ${review.is_approved ? '✅' : '❌'} | 
+                                    Dátum: ${new Date(review.date_created).toLocaleDateString('sk-SK')}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<p>Žiadne schválené recenzie nenájdené.</p>'}
+                `;
+
+            } catch (err) {
+                console.error('Error testing reviews access:', err);
+                output.innerHTML = `
+                    <h3>❌ Chyba pri testovaní prístupu k recenziam</h3>
+                    <p><strong>Error:</strong> ${err.message}</p>
+                    <p><strong>Details:</strong> ${JSON.stringify(err, null, 2)}</p>
+                    <h4>Debug info:</h4>
+                    <ul>
+                        <li>Supabase config: ${typeof window.SHERIFF_SUPABASE !== 'undefined' ? 'OK' : 'MISSING'}</li>
+                        <li>createClient function: ${typeof window.createClient !== 'undefined' || (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient !== 'undefined') || (typeof window.Supabase !== 'undefined' && typeof window.Supabase.createClient !== 'undefined') ? 'OK' : 'MISSING'}</li>
+                    </ul>
+                `;
+            }
+        }
+
+        async function testHomeReviews() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<h3>🔄 Testuje sa home reviews funkcia...</h3>';
+
+            try {
+                if (typeof initHomeReviews === 'function') {
+                    // Create temporary container
+                    const tempContainer = document.createElement('div');
+                    tempContainer.id = 'homeReviewsGrid';
+                    tempContainer.innerHTML = '<div>Loading...</div>';
+                    output.appendChild(tempContainer);
+
+                    // Call the function
+                    await initHomeReviews();
+
+                    output.innerHTML = `
+                        <h3>✅ Home reviews funkcia spustená</h3>
+                        <div style="border: 1px solid #ddd; padding: 20px; margin: 20px 0;">
+                            <h4>Obsah homeReviewsGrid:</h4>
+                            ${tempContainer.innerHTML}
+                        </div>
+                    `;
+                } else {
+                    output.innerHTML = `
+                        <h3>❌ initHomeReviews funkcia nie je dostupná</h3>
+                        <p>Skontroluj či sa načítal main.js správne.</p>
+                    `;
+                }
+            } catch (err) {
+                console.error('Error testing home reviews:', err);
+                output.innerHTML = `
+                    <h3>❌ Chyba pri testovaní home reviews</h3>
+                    <p>${err.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
