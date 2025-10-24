@@ -705,7 +705,7 @@ function createHomeActionCard(action) {
   
   // Add click handler to redirect to actions page
   card.addEventListener('click', function() {
-    window.location.href = 'akcie.html';
+    window.location.href = '/akcie';
   });
   
   // Calculate status and days
@@ -1109,4 +1109,64 @@ window.addEventListener('load', function() {
       console.log('[MAIN.JS] Actions page final HTML:', actionsList.innerHTML);
     }
   }, 4000);
+  
+  // Initialize lightbox
+  initLightbox();
 });
+
+// Modern Lightbox Implementation
+function initLightbox() {
+  // Create lightbox overlay if it doesn't exist
+  if (!document.querySelector('.lightbox-overlay')) {
+    const overlay = document.createElement('div');
+    overlay.className = 'lightbox-overlay';
+    overlay.innerHTML = `
+      <div class="lightbox-content">
+        <button class="lightbox-close" aria-label="Zavřít">×</button>
+        <img class="lightbox-image" src="" alt="">
+        <div class="lightbox-caption"></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    
+    // Close lightbox events
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeLightbox();
+    });
+    
+    overlay.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.classList.contains('active')) {
+        closeLightbox();
+      }
+    });
+  }
+}
+
+// Open lightbox function (called from gallery images)
+window.sheriffOpenLightbox = function(imageSrc, caption) {
+  const overlay = document.querySelector('.lightbox-overlay');
+  const image = overlay.querySelector('.lightbox-image');
+  const captionDiv = overlay.querySelector('.lightbox-caption');
+  
+  image.src = imageSrc;
+  image.alt = caption || '';
+  captionDiv.textContent = caption || '';
+  captionDiv.style.display = caption ? 'block' : 'none';
+  
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+  
+  overlay.classList.add('active');
+};
+
+// Close lightbox function
+function closeLightbox() {
+  const overlay = document.querySelector('.lightbox-overlay');
+  overlay.classList.remove('active');
+  
+  // Restore body scroll
+  document.body.style.overflow = '';
+}

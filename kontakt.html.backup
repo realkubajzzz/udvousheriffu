@@ -17,20 +17,20 @@
   <body>
     <header class="site-header">
       <div class="container header-inner">
-        <a class="brand" href="/">
+        <a class="brand" href="index.html">
           <img src="assets/logo.png" alt="U Dvou Šerifů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
           <span class="brand-text">U Dvou Šerifů</span>
         </a>
         
         <nav class="nav" id="nav">
-          <a href="/">Domov</a>
-          <a href="/menu">Menu</a>
-          <a href="/akcie">Akcie</a>
-          <a href="/rezervace">Rezervacie</a>
-          <a href="/galeria">Galerie</a>
-          <a href="/recenzie">Recenzie</a>
-          <a href="/about">O nás</a>
-          <a href="/kontakt" class="active">Kontakt</a>
+          <a href="index.html">Domov</a>
+          <a href="menu.html">Menu</a>
+          <a href="akcie.html">Akcie</a>
+          <a href="rezervace.html">Rezervacie</a>
+          <a href="galeria.html">Galerie</a>
+          <a href="recenzie.html">Recenzie</a>
+          <a href="about.html">O nás</a>
+          <a href="kontakt.html" class="active">Kontakt</a>
         </nav>
         <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
       </div>
@@ -74,14 +74,14 @@
           </div>
           
           <ul class="footer-links">
-            <li><a href="/">Domů</a></li>
-            <li><a href="/menu">Menu</a></li>
-            <li><a href="/akcie">Akce</a></li>
-            <li><a href="/rezervace">Rezervace</a></li>
-            <li><a href="/galeria">Galerie</a></li>
-            <li><a href="/recenzie">Recenze</a></li>
-            <li><a href="/about">O nás</a></li>
-            <li><a href="/kontakt">Kontakt</a></li>
+            <li><a href="index.html">Domů</a></li>
+            <li><a href="menu.html">Menu</a></li>
+            <li><a href="akcie.html">Akce</a></li>
+            <li><a href="rezervace.html">Rezervace</a></li>
+            <li><a href="galeria.html">Galerie</a></li>
+            <li><a href="recenzie.html">Recenze</a></li>
+            <li><a href="about.html">O nás</a></li>
+            <li><a href="kontakt.html">Kontakt</a></li>
           </ul>
 
           <div class="footer-contact">
