@@ -6,7 +6,7 @@
   <title>Galerie — U Dvou Šerifů</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png">
-  <link rel="stylesheet" href="styles/styles.css">
+  <link rel="stylesheet" href="styles/styles.css?v=20251024124614">
   <script src="/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
@@ -17,28 +17,37 @@
   <body>
     <header class="site-header">
       <div class="container header-inner">
-        <a class="brand" href="/">
+        <a class="brand" href="index.html">
           <img src="assets/logo.png" alt="U Dvou Šerifů logo" class="logo">
           <span class="brand-text">U Dvou Šerifů</span>
         </a>
         
         <nav class="nav" id="nav">
-          <a href="/">Domov</a>
-          <a href="/menu">Menu</a>
-          <a href="/akcie">Akcie</a>
-          <a href="/rezervace">Rezervacie</a>
-          <a href="/galeria" class="active">Galerie</a>
-          <a href="/recenzie">Recenzie</a>
-          <a href="/about">O nás</a>
-          <a href="/kontakt">Kontakt</a>
+          <a href="index.html">Domů</a>
+          <a href="menu.html">Menu</a>
+          <a href="akcie.html">Akce</a>
+          <a href="rezervace.html">Rezervace</a>
+          <a href="galeria.html" class="active">Galerie</a>
+          <a href="about.html">O nás</a>
+          <a href="kontakt.html">Kontakt</a>
+          <div class="language-switcher">
+            <a href="galeria.html" class="lang-btn active">
+              <span class="lang-flag">🇨🇿</span>
+              <span>CZ</span>
+            </a>
+            <a href="sk-galeria.html" class="lang-btn">
+              <span class="lang-flag">🇸🇰</span>
+              <span>SK</span>
+            </a>
+          </div>
         </nav>
         <button class="nav-toggle" aria-label="Otevřít menu">☰</button>
       </div>
     </header>
 
     <main class="container">
-      <h1>Fotogalerie</h1>
-      <p class="lead reveal">Momentky z hospody — přátelské setkání, živá hudba a dobré jídlo. Klikněte na obrázek pro zvětšení.</p>
+      <h1>Život u Dvou Šerifů</h1>
+      <p class="lead reveal">Pokud sem vstoupíš, jsi součást děje. A nic z toho se už nikdy nesmaže. Klikněte na obrázek pro zvětšení.</p>
 
       <section class="reveal">
         <div class="gallery">
@@ -64,14 +73,14 @@
           </div>
           
           <ul class="footer-links">
-            <li><a href="/">Domů</a></li>
-            <li><a href="/menu">Menu</a></li>
-            <li><a href="/akcie">Akce</a></li>
-            <li><a href="/rezervace">Rezervace</a></li>
-            <li><a href="/galeria">Galerie</a></li>
-            <li><a href="/recenzie">Recenze</a></li>
-            <li><a href="/about">O nás</a></li>
-            <li><a href="/kontakt">Kontakt</a></li>
+            <li><a href="index.html">Domů</a></li>
+            <li><a href="menu.html">Menu</a></li>
+            <li><a href="akcie.html">Akce</a></li>
+            <li><a href="rezervace.html">Rezervace</a></li>
+            <li><a href="galeria.html">Galerie</a></li>
+            <li><a href="recenzie.html">Recenze</a></li>
+            <li><a href="about.html">O nás</a></li>
+            <li><a href="kontakt.html">Kontakt</a></li>
           </ul>
 
           <div class="footer-contact">

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test CMS Actions Table</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .action-preview { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .action-title { font-weight: bold; color: #333; }
+        .action-desc { color: #666; margin: 5px 0; }
+        .action-meta { font-size: 0.9em; color: #999; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test CMS Actions Table</h1>
+    <div id="results"></div>
+    
+    <script src="/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script>
+        async function testActionsTable() {
+            const results = document.getElementById('results');
+            
+            function addResult(message, type = 'info') {
+                const div = document.createElement('div');
+                div.className = `result ${type}`;
+                div.innerHTML = message;
+                results.appendChild(div);
+                console.log(`[TEST] ${message}`);
+            }
+            
+            try {
+                // Setup
+                addResult('🔧 Setting up Supabase client...');
+                const cfg = window.SHERIFF_SUPABASE || {};
+                if (!cfg.url || !cfg.key) {
+                    addResult('❌ Supabase config missing!', 'error');
+                    return;
+                }
+                
+                const createClient = window.supabase?.createClient;
+                if (!createClient) {
+                    addResult('❌ Supabase library not loaded!', 'error');
+                    return;
+                }
+                
+                const client = createClient(cfg.url, cfg.key);
+                addResult('✅ Supabase client ready', 'success');
+                
+                // Test 1: Check if table exists and has data
+                addResult('📊 Testing cms_actions table...');
+                const { data: actions, error: readError } = await client
+                    .from('cms_actions')
+                    .select('*')
+                    .order('sort_order', { ascending: true });
+                
+                if (readError) {
+                    addResult(`❌ Error reading actions: ${readError.message}`, 'error');
+                    addResult(`🔍 Error details: Code ${readError.code}`, 'error');
+                    
+                    if (readError.message.includes('does not exist')) {
+                        addResult('💡 Spustite create-actions-table.sql v Supabase SQL Editor!', 'info');
+                    }
+                    return;
+                }
+                
+                addResult(`✅ Actions table exists with ${actions?.length || 0} records`, 'success');
+                
+                // Test 2: Display actions
+                if (actions && actions.length > 0) {
+                    addResult('📄 Found actions:', 'info');
+                    actions.forEach((action, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'action-preview';
+                        div.innerHTML = `
+                            <div class="action-title">${index + 1}. ${action.title}</div>
+                            <div class="action-desc">${action.description || 'Bez popisu'}</div>
+                            <div class="action-meta">
+                                ID: ${action.id} | 
+                                Active: ${action.is_active ? '✅' : '❌'} | 
+                                Sort: ${action.sort_order} | 
+                                Dates: ${action.start_date || 'N/A'} - ${action.end_date || 'N/A'}
+                                ${action.image_url ? `| 🖼️ <a href="${action.image_url}" target="_blank">Image</a>` : ''}
+                            </div>
+                        `;
+                        results.appendChild(div);
+                    });
+                } else {
+                    addResult('ℹ️ No actions found. Add some through CMS!', 'info');
+                }
+                
+                // Test 3: Test public read access (anon)
+                addResult('🔓 Testing public read access...');
+                const { data: publicActions, error: publicError } = await client
+                    .from('cms_actions')
+                    .select('*')
+                    .eq('is_active', true);
+                
+                if (publicError) {
+                    addResult(`❌ Public read error: ${publicError.message}`, 'error');
+                } else {
+                    addResult(`✅ Public can read ${publicActions?.length || 0} active actions`, 'success');
+                }
+                
+                addResult('🎉 All tests completed!', 'success');
+                addResult('💡 Now you can add actions in CMS and they will appear on website!', 'info');
+                
+            } catch (err) {
+                addResult(`💥 Unexpected error: ${err.message}`, 'error');
+                console.error('Test error:', err);
+            }
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', testActionsTable);
+    </script>
+</body>
+</html>

@@ -3,10 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rezervace — U Dvou Šerifů</title>
+  <title>Galerie — U Dvou Šerifů</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png">
-  <!-- No automatic redirect: page provides manual link to open the reservation channel -->
   <link rel="stylesheet" href="styles/styles.css?v=20251024124614">
   <script src="/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -15,49 +14,55 @@
   </script>
   <script defer src="scripts/main.js"></script>
   </head>
-  <body class="page-short">
+  <body>
     <header class="site-header">
       <div class="container header-inner">
-        <a class="brand" href="index.html">
-          <img src="assets/logo.png" alt="U Dvou Šerifů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
+        <a class="brand" href="sk-index.html">
+          <img src="assets/logo.png" alt="U Dvou Šerifů logo" class="logo">
           <span class="brand-text">U Dvou Šerifů</span>
         </a>
         
         <nav class="nav" id="nav">
-          <a href="index.html">Domů</a>
-          <a href="menu.html">Menu</a>
-          <a href="akcie.html">Akce</a>
-          <a href="rezervace.html" class="active">Rezervace</a>
-          <a href="galeria.html">Galerie</a>
-          <a href="about.html">O nás</a>
-          <a href="kontakt.html">Kontakt</a>
+          <a href="sk-index.html">Domov</a>
+          <a href="sk-menu.html">Menu</a>
+          <a href="sk-akcie.html">Akcie</a>
+          <a href="sk-rezervace.html">Rezervácie</a>
+          <a href="sk-galeria.html" class="active">Galéria</a>
+          <a href="sk-about.html">O nás</a>
+          <a href="sk-kontakt.html">Kontakt</a>
           <div class="language-switcher">
-            <a href="rezervace.html" class="lang-btn active">
+            <a href="galeria.html" class="lang-btn">
               <span class="lang-flag">🇨🇿</span>
               <span>CZ</span>
             </a>
-            <a href="sk-rezervace.html" class="lang-btn">
+            <a href="sk-galeria.html" class="lang-btn active">
               <span class="lang-flag">🇸🇰</span>
               <span>SK</span>
             </a>
           </div>
         </nav>
-        <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
+        <button class="nav-toggle" aria-label="Otvoriť menu">☰</button>
       </div>
     </header>
 
     <main class="container">
-      <h1>Rezervace</h1>
-  <p class="lead reveal">Pokud se chceš posadit bez boje o stůl, přejdi na rezervační kanál přes tlačítko níže.</p>
+      <h1>Život u Dvou Šerifů</h1>
+      <p class="lead reveal">Ak sem vstúpiš, si súčasť deja. A nič z toho sa už nikdy nezmaže. Kliknite na obrázok pre zväčšenie.</p>
 
       <section class="reveal">
-        <div class="card">
-          <h3>Rezervace online</h3>
-          <p>Pro rychlou rezervaci otevřete náš rezervační kanál a otevřete si ticket na rezervaci.</p>
-          <p class="more"><a class="btn" href="redirects/rezervace.html" target="_blank" rel="noopener">Otevřít kanál (rezervace)</a></p>
+        <div class="gallery">
+          <!-- Gallery images loaded dynamically from Supabase -->
+          <p class="loading-gallery">Načítavam galériu...</p>
         </div>
       </section>
+
     </main>
+
+    <!-- Lightbox handled by /scripts/main.js -->
+    <div id="lightbox" class="lightbox-overlay" aria-hidden="true">
+      <button id="lightboxClose" class="lightbox-close">✕</button>
+      <img id="lightboxImg" class="lightbox-img" src="" alt="">
+    </div>
 
     <footer class="site-footer">
       <div class="container">
@@ -68,14 +73,14 @@
           </div>
           
           <ul class="footer-links">
-            <li><a href="index.html">Domů</a></li>
-            <li><a href="menu.html">Menu</a></li>
-            <li><a href="akcie.html">Akce</a></li>
-            <li><a href="rezervace.html">Rezervace</a></li>
-            <li><a href="galeria.html">Galerie</a></li>
-            <li><a href="recenzie.html">Recenze</a></li>
-            <li><a href="about.html">O nás</a></li>
-            <li><a href="kontakt.html">Kontakt</a></li>
+            <li><a href="sk-index.html">Domov</a></li>
+            <li><a href="sk-menu.html">Menu</a></li>
+            <li><a href="sk-akcie.html">Akcie</a></li>
+            <li><a href="sk-rezervace.html">Rezervácie</a></li>
+            <li><a href="sk-galeria.html">Galéria</a></li>
+            <li><a href="sk-recenzie.html">Recenzie</a></li>
+            <li><a href="sk-about.html">O nás</a></li>
+            <li><a href="sk-kontakt.html">Kontakt</a></li>
           </ul>
 
           <div class="footer-contact">

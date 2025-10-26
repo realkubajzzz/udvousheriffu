@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Reviews Database</title>
+</head>
+<body>
+    <h1>Test Reviews Database</h1>
+    <button onclick="addTestReviews()">Pridať testové recenzie</button>
+    <button onclick="loadAllReviews()">Načítať všetky recenzie</button>
+    <div id="output"></div>
+
+    <script src="scripts/supabase.js"></script>
+    <script>
+        // Ensure Supabase is loaded
+        let supabaseClient;
+        
+        if (typeof createClient !== 'undefined') {
+            console.log('Creating Supabase client...');
+            supabaseClient = createClient(SHERIFF_SUPABASE.url, SHERIFF_SUPABASE.key);
+            console.log('Supabase client created:', supabaseClient);
+        } else {
+            console.error('Supabase not loaded!');
+        }
+
+        async function addTestReviews() {
+            if (!supabaseClient) {
+                alert('Supabase client not initialized!');
+                return;
+            }
+
+            const testReviews = [
+                {
+                    customer_name: 'Jan Novák',
+                    rating: 5,
+                    review_text: 'Výborná reštaurácia! Jedlo bolo fantastické a obsluha veľmi milá. Určite sa vrátim!',
+                    is_approved: true
+                },
+                {
+                    customer_name: 'Marie Svobodová', 
+                    rating: 4,
+                    review_text: 'Pekné prostredie a chutné jedlo. Iba trochu dlhšie čakanie, ale inak spokojnosť.',
+                    is_approved: true
+                },
+                {
+                    customer_name: 'Petr Dvořák',
+                    rating: 5,
+                    review_text: 'Najlepší guláš v meste! Autentická atmosféra western reštaurácie. Odporúčam všetkým!',
+                    is_approved: true
+                },
+                {
+                    customer_name: 'TestBot#1234',
+                    rating: 3,
+                    review_text: 'Priemerné jedlo, nič zvláštne. Ceny sú ok.',
+                    discord_user_id: '123456789012345678',
+                    discord_username: 'TestBot#1234',
+                    is_approved: false
+                },
+                {
+                    customer_name: 'Anna Kratochvílová',
+                    rating: 5,
+                    review_text: 'Skvelá reštaurácia s úžasnou atmosférou! Personál bol veľmi ochotný a jedlo chutilo výborne.',
+                    is_approved: true
+                }
+            ];
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('reviews')
+                    .insert(testReviews)
+                    .select();
+
+                if (error) throw error;
+
+                document.getElementById('output').innerHTML = `
+                    <h3>✅ Úspešne pridané ${data.length} testovacích recenzií</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (err) {
+                console.error('Error adding test reviews:', err);
+                document.getElementById('output').innerHTML = `
+                    <h3>❌ Chyba pri pridávaní recenzií</h3>
+                    <p>${err.message}</p>
+                `;
+            }
+        }
+
+        async function loadAllReviews() {
+            if (!supabaseClient) {
+                alert('Supabase client not initialized!');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('reviews')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                document.getElementById('output').innerHTML = `
+                    <h3>📋 Všetky recenzie (${data.length})</h3>
+                    <table border="1" style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <th>Meno</th>
+                            <th>Hodnotenie</th>
+                            <th>Text</th>
+                            <th>Schválené</th>
+                            <th>Discord</th>
+                            <th>Dátum</th>
+                        </tr>
+                        ${data.map(review => `
+                            <tr>
+                                <td>${review.customer_name}</td>
+                                <td>${'⭐'.repeat(review.rating)}</td>
+                                <td style="max-width: 200px;">${review.review_text.substring(0, 100)}...</td>
+                                <td>${review.is_approved ? '✅' : '❌'}</td>
+                                <td>${review.discord_username || '-'}</td>
+                                <td>${new Date(review.date_created).toLocaleDateString('sk-SK')}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                `;
+            } catch (err) {
+                console.error('Error loading reviews:', err);
+                document.getElementById('output').innerHTML = `
+                    <h3>❌ Chyba pri načítavaní recenzií</h3>
+                    <p>${err.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

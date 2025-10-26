@@ -40,10 +40,56 @@ main{
 
 /* Western ornamental underline (subtle rope line) */
 .brand:after{content:'';display:block;height:2px;background:linear-gradient(90deg, transparent, var(--accent-2), transparent);width:70px;margin-left:8px;border-radius:2px;opacity:.9}
-.nav{margin-left:auto;display:flex;gap:14px}
+.nav{display:flex;gap:14px}
 .nav a{color:var(--muted);text-decoration:none;padding:8px 10px;border-radius:8px;transition:color .18s, background .18s}
 .nav a:hover{color:var(--warm);background:rgba(139,94,60,0.06)}
 .nav a.active{color:var(--warm);font-weight:700}
+
+/* Language Switcher */
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  padding: 4px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  backdrop-filter: blur(10px);
+}
+
+.lang-btn {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lang-btn:hover {
+  color: var(--warm);
+  background: rgba(210,105,30,0.1);
+}
+
+.lang-btn.active {
+  background: rgba(179, 139, 108, 0.9);
+  color: white;
+  box-shadow: 0 2px 8px rgba(210,105,30,0.3);
+  border-radius: 16px;
+  backdrop-filter: blur(6px);
+}
+
+.lang-flag {
+  font-size: 14px;
+}
 
 /* Open/Closed status badge in the navbar */
 .open-status{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;font-weight:600;font-size:14px;color:var(--muted);background:rgba(255,255,255,0.95);border:1px solid rgba(0,0,0,0.06);box-shadow:0 8px 30px rgba(0,0,0,0.08);backdrop-filter:blur(6px)}
@@ -151,6 +197,161 @@ main{
 
 .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:36px}
 .card{background:var(--card);padding:18px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(18,18,18,0.04)}
+
+/* Team photo hover effect */
+.card [style*="cursor:pointer"]:hover {
+  transform: scale(1.05);
+}
+
+/* Bombový Team Card Design */
+.team-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f5f1 100%);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 
+    0 20px 40px rgba(0,0,0,0.08),
+    0 8px 16px rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+  border: 1px solid rgba(139,108,79,0.1);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  margin: 20px 0;
+}
+
+.team-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #c6862a 0%, #b3796c 50%, #8b6c4f 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.team-card:hover::before {
+  opacity: 1;
+}
+
+.team-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 30px 60px rgba(0,0,0,0.12),
+    0 12px 24px rgba(0,0,0,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+.team-content {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.team-photo-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.team-photo {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f2e7dc 0%, #efe3d8 40%, #e8dccf 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 
+    0 12px 24px rgba(0,0,0,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+  border: 4px solid rgba(255,255,255,0.9);
+  position: relative;
+}
+
+.team-photo::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: linear-gradient(45deg, #c6862a, #b3796c, #8b6c4f, #c6862a);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.team-photo:hover::before {
+  opacity: 1;
+}
+
+.team-photo:hover {
+  transform: scale(1.08) rotate(2deg);
+  box-shadow: 
+    0 20px 40px rgba(0,0,0,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.4);
+}
+
+.team-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
+.team-photo:hover img {
+  transform: scale(1.05);
+}
+
+.team-info {
+  flex: 1;
+}
+
+.team-info h3 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2c1810;
+  margin: 0 0 8px 0;
+  position: relative;
+}
+
+.team-info h3::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background: linear-gradient(90deg, #c6862a, #b3796c);
+  border-radius: 2px;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.team-card:hover .team-info h3::after {
+  opacity: 1;
+  width: 60px;
+}
+
+.team-role {
+  font-size: 16px;
+  color: #8b6c4f;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.team-description {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #5d4a3a;
+  margin: 0;
+  position: relative;
+}
 
 /* Slight aged paper texture suggestion using gradient */
 .promo{background:linear-gradient(180deg, #fffaf6, #fffdfc);border:1px solid rgba(0,0,0,0.03)}
@@ -1012,7 +1213,16 @@ body.page-galerie .site-footer {
 /* Responsive */
 @media (max-width:780px){
   .nav{display:none;position:absolute;right:20px;top:64px;flex-direction:column;background:var(--card);padding:10px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.06);z-index:1000}
-  .nav-toggle{display:block;margin-left:auto}
+  .nav-toggle{display:block}
+  
+  /* Language switcher mobile */
+  .language-switcher{
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    width: 100%;
+    justify-content: center;
+  }
   .contact-grid{grid-template-columns:1fr}
   .specials .grid, #homeActionsGrid{
     flex-direction:column !important;
@@ -1127,27 +1337,34 @@ body.page-galerie .site-footer {
 }
 .feature-item{
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   gap:12px;
   background:var(--card);
   padding:16px;
   border-radius:10px;
   box-shadow:0 2px 8px rgba(0,0,0,0.04);
+  min-height:64px;
 }
 .feature-icon{
   font-size:24px;
   width:40px;
   text-align:center;
+  flex-shrink:0;
+}
+.feature-text{
+  flex:1;
 }
 .feature-item h4{
   margin:0 0 4px 0;
   color:var(--warm);
   font-size:14px;
+  line-height:1.2;
 }
 .feature-item p{
   margin:0;
   font-size:12px;
   color:var(--muted);
+  line-height:1.3;
 }
 
 /* Reviews Section */

@@ -378,8 +378,8 @@ function handleContactSubmit(e){
 
 // Lightbox initializer (safe: will not duplicate handlers)
 document.addEventListener('DOMContentLoaded', ()=>{
-  // Initialize lightbox if there's a gallery OR a carousel on the page
-  if(document.querySelectorAll('.gallery').length===0 && document.querySelectorAll('.car-track img').length===0) return;
+  // Initialize lightbox if there's a gallery OR a carousel OR team cards on the page
+  if(document.querySelectorAll('.gallery').length===0 && document.querySelectorAll('.car-track img').length===0 && document.querySelectorAll('.team-card').length===0) return;
   // Avoid double-init
   if(window.__sheriff_lightbox_initialized) return;
   window.__sheriff_lightbox_initialized = true;
@@ -705,7 +705,7 @@ function createHomeActionCard(action) {
   
   // Add click handler to redirect to actions page
   card.addEventListener('click', function() {
-    window.location.href = '/akcie';
+    window.location.href = 'akcie.html';
   });
   
   // Calculate status and days

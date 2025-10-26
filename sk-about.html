@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>O nás — U Dvou Šerifů</title>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+  <link rel="stylesheet" href="styles/styles.css?v=20251024124614">
+  <script src="/supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    if (window.supabase && typeof window.supabase.createClient === 'function') window.createClient = window.supabase.createClient;
+  </script>
+  <script defer src="scripts/main.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="sk-index.html">
+          <img src="assets/logo.png" alt="U Dvou Šerifů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
+          <span class="brand-text">U Dvou Šerifů</span>
+        </a>
+        
+        <nav class="nav" id="nav">
+          <a href="sk-index.html">Domov</a>
+          <a href="sk-menu.html">Menu</a>
+          <a href="sk-akcie.html">Akcie</a>
+          <a href="sk-rezervace.html">Rezervácie</a>
+          <a href="sk-galeria.html">Galéria</a>
+          <a href="sk-about.html" class="active">O nás</a>
+          <a href="sk-kontakt.html">Kontakt</a>
+          <div class="language-switcher">
+            <a href="about.html" class="lang-btn">
+              <span class="lang-flag">🇨🇿</span>
+              <span>CZ</span>
+            </a>
+            <a href="sk-about.html" class="lang-btn active">
+              <span class="lang-flag">🇸🇰</span>
+              <span>SK</span>
+            </a>
+          </div>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Otvoriť menu">☰</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <h1>O nás</h1>
+  <p class="lead reveal">U Dvou Šerifů nie je miesto pre pózy — je to miesto pre tých, čo majú radi pravdu na tanieri a pivo, čo má charakter. Vo vzduchu cítiť dym grilu, hukot smiechu a zvuk pohárov — tu sa veci dejú naplno.
+Dvaja „šerifovia“ držia poriadok, starajú sa o každé jedlo a stoja za kvalitou tak, ako šerif stojí za zákonom. Príď, sadni si za stôl a odviaž sa — ak to zvládneš, nájdeš tu miesto, kam sa budeš vracať.</p>
+
+      <section class="reveal">
+        <h2>Kto sme?</h2>
+        <p>Dvaja chlapi, ktorí sa neuspokojili s priemernosťou — a otvorili krčmu, kde vládne chuť, férovosť a atmosféra, čo sa nehrá na nič. Toto miesto nie je pre každého, ale kto to pochopí, cíti sa tu ako doma.</p>
+      </section>
+
+      <section class="cards-grid reveal" id="team">
+        <article class="team-card">
+          <div class="team-content">
+            <div class="team-photo-container">
+              <div class="team-photo" onclick="window.sheriffOpenLightbox('assets/team/owner.jpg', 'Majiteľ - Zakladateľ a srdce reštaurácie')">
+                <img src="assets/team/owner.jpg" alt="Majiteľ" onerror="this.src='assets/team/placeholder.png'">
+              </div>
+            </div>
+            <div class="team-info">
+              <h3>Majiteľ</h3>
+              <div class="team-role">Aiden Pearce</div>
+              <p class="team-description">Nie som ten, čo stojí pri panvici — som ten, čo drží túto krčmu pokope a nedovolím, aby z kuchyne odišlo niečo, za čo by som nedal svoje meno. Milujem tradíciu a poctivosť. Chcem, aby sa každý hosť cítil tak dobre, že zabudne na čas — ale nikdy nie na chuť, ktorú tu zažije.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="team-card">
+          <div class="team-content">
+            <div class="team-photo-container">
+              <div class="team-photo" onclick="window.sheriffOpenLightbox('assets/team/sinns.jpg', 'Obchodný riaditeľ - Stará sa o hostí a partnerstvá')">
+                <img src="assets/team/sinns.jpg" alt="Obchodný riaditeľ" onerror="this.src='assets/team/placeholder.png'">
+              </div>
+            </div>
+            <div class="team-info">
+              <h3>Obchodný riaditeľ</h3>
+              <div class="team-role">Andrew Sinns</div>
+              <p class="team-description">Starám sa o hostí, partnerstvá a všetko, čo sa u nás deje mimo kuchyne — od špeciálnych akcií až po to, aby mal každý pri stole to čo práve potrebuje. Nerobím to s naučeným úsmevom, ale s nadšením, ktoré ľudia cítia hneď po vstupe.</p>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="reveal">
+        <h2>Priestor</h2>
+        <p>Naša krčma nie je ozdoba do katalógu. Je postavený tak, aby si si mohol sadnúť, vypnúť a byť medzi svojimi. Drevo, hluk, vôňa jedla a prirodzená atmosféra — miesto, kde sa rozhovory rozbehnú samé a čas prestane tlačiť.</p>
+      </section>
+    </main>
+
+    <!-- Lightbox for team photos -->
+    <div id="lightbox" class="lightbox-overlay" aria-hidden="true">
+      <button id="lightboxClose" class="lightbox-close">✕</button>
+      <img id="lightboxImg" class="lightbox-img" src="" alt="">
+    </div>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <img src="assets/logo.png" alt="U Dvou Šerifů" class="footer-logo">
+            <h4>U Dvou Šerifů</h4>
+          </div>
+          
+          <ul class="footer-links">
+            <li><a href="sk-index.html">Domov</a></li>
+            <li><a href="sk-menu.html">Menu</a></li>
+            <li><a href="sk-akcie.html">Akcie</a></li>
+            <li><a href="sk-rezervace.html">Rezervácie</a></li>
+            <li><a href="sk-galeria.html">Galéria</a></li>
+            <li><a href="sk-recenzie.html">Recenzie</a></li>
+            <li><a href="sk-about.html">O nás</a></li>
+            <li><a href="sk-kontakt.html">Kontakt</a></li>
+          </ul>
+
+          <div class="footer-contact">
+            <p>📍 Panorama Drive, Sandy Shores</p>
+            <p>📞 638 654 405</p>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <p>&copy; 2025 U Dvou Šerifů. Všechna práva vyhrazena.</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

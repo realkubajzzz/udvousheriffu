@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Actions</title>
+    <link rel="stylesheet" href="styles/styles.css">
+    <script src="/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .debug-title { font-weight: bold; color: #333; }
+        .debug-info { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .test-grid { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Debug Actions Loading</h1>
+    
+    <div class="debug-section">
+        <div class="debug-title">Supabase Configuration</div>
+        <div id="supabaseConfig" class="debug-info">Loading...</div>
+    </div>
+    
+    <div class="debug-section">
+        <div class="debug-title">Database Connection Test</div>
+        <div id="connectionTest" class="debug-info">Testing...</div>
+    </div>
+    
+    <div class="debug-section">
+        <div class="debug-title">Actions Data</div>
+        <div id="actionsData" class="debug-info">Loading...</div>
+    </div>
+    
+    <div class="debug-section">
+        <div class="debug-title">Homepage Actions Grid Test</div>
+        <div id="homeActionsGrid" class="test-grid">
+            <p class="loading-actions">Načítavam akcie...</p>
+        </div>
+    </div>
+    
+    <div class="debug-section">
+        <div class="debug-title">Actions Page Test</div>
+        <div id="actionsList" class="actions-grid test-grid">
+            <p class="loading-actions">Načítavam akcie...</p>
+        </div>
+    </div>
+
+    <script>
+        window.createClient = window.supabase.createClient;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('[DEBUG] Starting debug session...');
+            
+            // Show Supabase config
+            const configEl = document.getElementById('supabaseConfig');
+            configEl.innerHTML = `
+                URL: ${window.SHERIFF_SUPABASE?.url || 'NOT SET'}<br>
+                Key exists: ${!!window.SHERIFF_SUPABASE?.key}<br>
+                createClient function: ${typeof window.createClient}
+            `;
+            
+            // Test connection
+            const connectionEl = document.getElementById('connectionTest');
+            try {
+                if (!window.SHERIFF_SUPABASE?.url || !window.SHERIFF_SUPABASE?.key) {
+                    throw new Error('Supabase config missing');
+                }
+                
+                const client = window.createClient(window.SHERIFF_SUPABASE.url, window.SHERIFF_SUPABASE.key);
+                console.log('[DEBUG] Client created:', client);
+                
+                // Test simple query first
+                const { data: testData, error: testError } = await client.from('cms_actions').select('count', { count: 'exact', head: true });
+                
+                if (testError) {
+                    console.error('[DEBUG] Connection test failed:', testError);
+                    connectionEl.innerHTML = `❌ Connection failed: ${testError.message}`;
+                } else {
+                    console.log('[DEBUG] Connection test passed:', testData);
+                    connectionEl.innerHTML = '✅ Connected successfully';
+                }
+                
+                // Now try to get actual data
+                const { data, error } = await client
+                    .from('cms_actions')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('sort_order', { ascending: true })
+                    .order('created_at', { ascending: false });
+                
+                console.log('[DEBUG] Actions query result:', { data, error });
+                
+                const actionsEl = document.getElementById('actionsData');
+                if (error) {
+                    actionsEl.innerHTML = `❌ Query failed: ${error.message}`;
+                    console.error('[DEBUG] Query error details:', error);
+                } else {
+                    actionsEl.innerHTML = `
+                        ✅ Query successful<br>
+                        Records found: ${data?.length || 0}<br>
+                        Data: <pre style="font-size: 12px; max-height: 200px; overflow-y: auto;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    
+                    // Test card creation
+                    if (data && data.length > 0) {
+                        console.log('[DEBUG] Creating test cards...');
+                        
+                        // Test homepage cards
+                        const homeGrid = document.getElementById('homeActionsGrid');
+                        homeGrid.innerHTML = '';
+                        
+                        const homeActions = data.slice(0, 3);
+                        homeActions.forEach((action, index) => {
+                            console.log(`[DEBUG] Creating home card ${index + 1}:`, action);
+                            const card = createHomeActionCard(action);
+                            homeGrid.appendChild(card);
+                        });
+                        
+                        // Test actions page cards
+                        const actionsList = document.getElementById('actionsList');
+                        actionsList.innerHTML = '';
+                        
+                        data.forEach((action, index) => {
+                            console.log(`[DEBUG] Creating full card ${index + 1}:`, action);
+                            const card = createFullActionCard(action);
+                            actionsList.appendChild(card);
+                        });
+                    }
+                }
+                
+            } catch (err) {
+                console.error('[DEBUG] Test failed:', err);
+                connectionEl.innerHTML = `❌ Test failed: ${err.message}`;
+            }
+        });
+        
+        // Copy functions from main.js
+        function createHomeActionCard(action) {
+            console.log('[DEBUG] Creating home action card for:', action);
+            
+            const card = document.createElement('div');
+            card.className = 'action-card-home reveal';
+            
+            const imageStyle = action.image_url ? 
+                `background-image: url('${action.image_url}');` : '';
+            
+            const dateRange = (action.start_date || action.end_date) ? 
+                `<p class="card-date">${formatDateRange(action.start_date, action.end_date)}</p>` : '';
+            
+            const cardHTML = `
+                <div class="card-content">
+                    <div class="card-image" style="${imageStyle}" aria-hidden="true"></div>
+                    <div class="card-text">
+                        <h4>${action.title || 'Bez názvu'}</h4>
+                        <p>${action.description || 'Bez popisu'}</p>
+                        ${dateRange}
+                    </div>
+                </div>
+            `;
+            
+            card.innerHTML = cardHTML;
+            console.log('[DEBUG] Home card HTML:', cardHTML);
+            
+            return card;
+        }
+
+        function createFullActionCard(action) {
+            console.log('[DEBUG] Creating full action card for:', action);
+            
+            const card = document.createElement('article');
+            card.className = 'action-card reveal';
+            
+            const imageHTML = action.image_url ? 
+                `<img src="${action.image_url}" alt="${action.title}" class="action-image">` : 
+                '<div class="action-image" style="background:linear-gradient(135deg,#efe3d8,#f7f3ef);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;">Bez obrázku</div>';
+            
+            const dateRange = (action.start_date || action.end_date) ? 
+                `<span class="action-date">${formatDateRange(action.start_date, action.end_date)}</span>` : '';
+            
+            const cardHTML = `
+                ${imageHTML}
+                <div class="action-content">
+                    ${dateRange}
+                    <h3>${action.title || 'Bez názvu'}</h3>
+                    <p>${action.description || 'Bez popisu'}</p>
+                </div>
+            `;
+            
+            card.innerHTML = cardHTML;
+            console.log('[DEBUG] Full card HTML:', cardHTML);
+            
+            return card;
+        }
+
+        function formatDateRange(startDate, endDate) {
+            const options = { day: 'numeric', month: 'numeric', year: 'numeric' };
+            
+            if (startDate && endDate) {
+                const start = new Date(startDate).toLocaleDateString('cs-CZ', options);
+                const end = new Date(endDate).toLocaleDateString('cs-CZ', options);
+                return `${start} - ${end}`;
+            } else if (startDate) {
+                return `Od ${new Date(startDate).toLocaleDateString('cs-CZ', options)}`;
+            } else if (endDate) {
+                return `Do ${new Date(endDate).toLocaleDateString('cs-CZ', options)}`;
+            }
+            return '';
+        }
+    </script>
+</body>
+</html>

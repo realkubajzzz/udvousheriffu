@@ -6,7 +6,7 @@
   <title>O nás — U Dvou Šerifů</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png">
-  <link rel="stylesheet" href="styles/styles.css">
+  <link rel="stylesheet" href="styles/styles.css?v=20251024124614">
   <script src="/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
@@ -17,20 +17,29 @@
   <body>
     <header class="site-header">
       <div class="container header-inner">
-        <a class="brand" href="/">
+        <a class="brand" href="index.html">
           <img src="assets/logo.png" alt="U Dvou Šerifů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
           <span class="brand-text">U Dvou Šerifů</span>
         </a>
         
         <nav class="nav" id="nav">
-          <a href="/">Domov</a>
-          <a href="/menu">Menu</a>
-          <a href="/akcie">Akcie</a>
-          <a href="/rezervace">Rezervacie</a>
-          <a href="/galeria">Galerie</a>
-          <a href="/recenzie">Recenzie</a>
-          <a href="/about" class="active">O nás</a>
-          <a href="/kontakt">Kontakt</a>
+          <a href="index.html">Domů</a>
+          <a href="menu.html">Menu</a>
+          <a href="akcie.html">Akce</a>
+          <a href="rezervace.html">Rezervace</a>
+          <a href="galeria.html">Galerie</a>
+          <a href="about.html" class="active">O nás</a>
+          <a href="kontakt.html">Kontakt</a>
+          <div class="language-switcher">
+            <a href="about.html" class="lang-btn active">
+              <span class="lang-flag">🇨🇿</span>
+              <span>CZ</span>
+            </a>
+            <a href="sk-about.html" class="lang-btn">
+              <span class="lang-flag">🇸🇰</span>
+              <span>SK</span>
+            </a>
+          </div>
         </nav>
         <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
       </div>
@@ -38,34 +47,42 @@
 
     <main class="container">
       <h1>O nás</h1>
-  <p class="lead reveal">U Dvou Šerifů je útulná hospoda, kde se potkávají dobří lidé, zní smích a voní poctivé občerstvení. Dva „šerifové“ — majitel a obchodní ředitel — dohání atmosféru a starají se, aby každý odcházel spokojený.</p>
+  <p class="lead reveal">U Dvou Šerifů není místo pro pózy - je to místo pro ty, co mají rádi pravdu na talíři a pivo, co má charakter. Ve vzduchu cítit kouř grilu, hukot smíchu a zvuk sklenic – tady se věci dají naplno.
+
+Dva „šeřifové“ drží pořádek, starají se o každé jídlo a stojí za kvalitou tak, jak šerif stojí za zákonem. Přijď, sedni si za stůl a odvaž se - pokud to zvládneš, najdeš zde místo, kam se budeš vracet.</p>
 
       <section class="reveal">
-        <h2>Naše vize</h2>
-        <p>Vytvořit místo pro setkávání, kde se servíruje dobré jídlo, hraje přátelská muzika a každý host je vítán jako kamarád.</p>
+        <h2>Kdo jsme?</h2>
+        <p>Dva chlapi, kteří se nespokojili s průměrností — a otevřeli hospodu, kde vládne chuť, férovost a atmosféra, což si nehraje na nic. Toto místo není pro každého, ale kdo to pochopí, cítí se tady jako doma.</p>
       </section>
 
       <section class="cards-grid reveal" id="team">
-        <article class="card">
-          <div style="display:flex;gap:12px;align-items:center">
-            <div style="width:96px;height:96px;background:linear-gradient(135deg,#efe3d8,#f7f3ef);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden">
-              <img src="assets/team/owner.jpg" alt="Majitel" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.src='assets/team/placeholder.png'">
+        <article class="team-card">
+          <div class="team-content">
+            <div class="team-photo-container">
+              <div class="team-photo" onclick="window.sheriffOpenLightbox('assets/team/owner.jpg', 'Majitel - Zakladatel a srdce hospody')">
+                <img src="assets/team/owner.jpg" alt="Majitel" onerror="this.src='assets/team/placeholder.png'">
+              </div>
             </div>
-            <div>
+            <div class="team-info">
               <h3>Majitel</h3>
-              <p class="note">Zakladatel a srdce hospody — dbá na praskající ocas u ohně a pořádné jídlo.</p>
+              <div class="team-role">Aiden Pearce</div>
+              <p class="team-description">Nejsem ten, co stojí u pánve – jsem ten, kdo drží tuto hospodu pohromadě a nedovolím, aby z kuchyně odešlo něco, za co bych nedal své jméno. Miluji tradici a poctivost. Chci, aby se každý host cítil tak dobře, že zapomene na čas - ale nikdy ne na chuť, kterou zde zažije.</p>
             </div>
           </div>
         </article>
 
-        <article class="card">
-          <div style="display:flex;gap:12px;align-items:center">
-            <div style="width:96px;height:96px;background:linear-gradient(135deg,#efe3d8,#f7f3ef);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden">
-              <img src="assets/team/manager.jpg" alt="Obchodní ředitel" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.src='assets/team/placeholder.png'">
+        <article class="team-card">
+          <div class="team-content">
+            <div class="team-photo-container">
+              <div class="team-photo" onclick="window.sheriffOpenLightbox('assets/team/sinns.jpg', 'Obchodní ředitel - Stará se o hosty a partnerství')">
+                <img src="assets/team/sinns.jpg" alt="Obchodní ředitel" onerror="this.src='assets/team/placeholder.png'">
+              </div>
             </div>
-            <div>
+            <div class="team-info">
               <h3>Obchodní ředitel</h3>
-              <p class="note">Stará se o hosty, partnerství a speciální akce — vždy s úsměvem a nabídkou dobrého piva.</p>
+              <div class="team-role">Andrew Sinns</div>
+              <p class="team-description">Starám se o hosty, partnerství a vše, co se u nás děje mimo kuchyni – od speciálních akcí až po to, aby měl každý u stolu to, co právě potřebuje. Nedělám to s naučeným úsměvem, ale s nadšením, které lidé cítí hned po vstupu.</p>
             </div>
           </div>
         </article>
@@ -73,9 +90,15 @@
 
       <section class="reveal">
         <h2>Prostor</h2>
-        <p>Naše hospoda je navržena tak, aby hosté cítili teplo dřeva, pohodlí a neformální atmosféru — ideální místo pro setkání s přáteli nebo posezení u dobrého jídla.</p>
+        <p>Naše hospoda není ozdoba do katalogu. Je postaven tak, aby sis mohl sednout, vypnout a být mezi svými. Dřevo, hluk, vůně jídla a přirozená atmosféra – místo, kde se rozhovory rozběhnou samy a čas přestane tlačit.</p>
       </section>
     </main>
+
+    <!-- Lightbox for team photos -->
+    <div id="lightbox" class="lightbox-overlay" aria-hidden="true">
+      <button id="lightboxClose" class="lightbox-close">✕</button>
+      <img id="lightboxImg" class="lightbox-img" src="" alt="">
+    </div>
 
     <footer class="site-footer">
       <div class="container">
@@ -86,14 +109,14 @@
           </div>
           
           <ul class="footer-links">
-            <li><a href="/">Domů</a></li>
-            <li><a href="/menu">Menu</a></li>
-            <li><a href="/akcie">Akce</a></li>
-            <li><a href="/rezervace">Rezervace</a></li>
-            <li><a href="/galeria">Galerie</a></li>
-            <li><a href="/recenzie">Recenze</a></li>
-            <li><a href="/about">O nás</a></li>
-            <li><a href="/kontakt">Kontakt</a></li>
+            <li><a href="index.html">Domů</a></li>
+            <li><a href="menu.html">Menu</a></li>
+            <li><a href="akcie.html">Akce</a></li>
+            <li><a href="rezervace.html">Rezervace</a></li>
+            <li><a href="galeria.html">Galerie</a></li>
+            <li><a href="recenzie.html">Recenze</a></li>
+            <li><a href="about.html">O nás</a></li>
+            <li><a href="kontakt.html">Kontakt</a></li>
           </ul>
 
           <div class="footer-contact">

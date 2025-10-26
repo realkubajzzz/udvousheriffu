@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jednoduchý test akcií</title>
+    <link rel="stylesheet" href="styles/styles.css">
+    <script src="/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .debug { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Jednoduchý test akcií</h1>
+        
+        <div id="status" class="debug">Inicializujem...</div>
+        
+        <h2>Homepage akcie</h2>
+        <div id="homeActionsGrid" class="grid">
+            <p class="loading-actions">Načítavam akcie...</p>
+        </div>
+        
+        <h2>Actions page akcie</h2>
+        <div id="actionsList" class="actions-grid">
+            <p class="loading-actions">Načítavam akcie...</p>
+        </div>
+        
+        <div class="debug">
+            <h3>Console výpisy</h3>
+            <div id="consoleOutput"></div>
+        </div>
+    </div>
+
+    <script>
+        window.createClient = window.supabase.createClient;
+        
+        // Capture console logs
+        const consoleDiv = document.getElementById('consoleOutput');
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        function addLog(type, ...args) {
+            const div = document.createElement('div');
+            div.className = type === 'error' ? 'error' : '';
+            div.textContent = `[${type.toUpperCase()}] ${args.join(' ')}`;
+            consoleDiv.appendChild(div);
+        }
+        
+        console.log = (...args) => {
+            originalLog(...args);
+            addLog('log', ...args);
+        };
+        
+        console.error = (...args) => {
+            originalError(...args);
+            addLog('error', ...args);
+        };
+        
+        // Test function
+        async function testActions() {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                console.log('Starting test...');
+                statusDiv.textContent = 'Testuje sa pripojenie...';
+                
+                if (!window.SHERIFF_SUPABASE?.url || !window.SHERIFF_SUPABASE?.key) {
+                    throw new Error('Supabase konfigurácia chýba');
+                }
+                
+                const client = window.createClient(window.SHERIFF_SUPABASE.url, window.SHERIFF_SUPABASE.key);
+                console.log('Supabase client vytvorený');
+                
+                statusDiv.textContent = 'Načítavam akcie...';
+                
+                const { data, error } = await client
+                    .from('cms_actions')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('sort_order', { ascending: true })
+                    .order('created_at', { ascending: false });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                console.log('Akcie načítané:', data);
+                statusDiv.innerHTML = `<span class="success">✅ Úspešne načítané ${data?.length || 0} akcií</span>`;
+                
+                // Test homepage cards
+                const homeGrid = document.getElementById('homeActionsGrid');
+                homeGrid.innerHTML = '';
+                
+                if (data && data.length > 0) {
+                    const homeActions = data.slice(0, 3);
+                    homeActions.forEach((action, index) => {
+                        const card = document.createElement('div');
+                        card.className = 'action-card-home';
+                        card.innerHTML = `
+                            <div class="card-content">
+                                <div class="card-image" style="${action.image_url ? `background-image: url('${action.image_url}');` : ''}" aria-hidden="true"></div>
+                                <div class="card-text">
+                                    <h4>${action.title || 'Bez názvu'}</h4>
+                                    <p>${action.description || 'Bez popisu'}</p>
+                                </div>
+                            </div>
+                        `;
+                        homeGrid.appendChild(card);
+                        console.log(`Homepage karta ${index + 1} vytvorená`);
+                    });
+                } else {
+                    homeGrid.innerHTML = '<p class="no-actions">Žiadne akcie.</p>';
+                }
+                
+                // Test actions page cards
+                const actionsList = document.getElementById('actionsList');
+                actionsList.innerHTML = '';
+                
+                if (data && data.length > 0) {
+                    data.forEach((action, index) => {
+                        const card = document.createElement('article');
+                        card.className = 'action-card';
+                        card.innerHTML = `
+                            ${action.image_url ? 
+                                `<img src="${action.image_url}" alt="${action.title}" class="action-image">` : 
+                                '<div class="action-image" style="background:linear-gradient(135deg,#efe3d8,#f7f3ef);display:flex;align-items:center;justify-content:center;color:#666;font-size:14px;">Bez obrázku</div>'
+                            }
+                            <div class="action-content">
+                                <h3>${action.title || 'Bez názvu'}</h3>
+                                <p>${action.description || 'Bez popisu'}</p>
+                            </div>
+                        `;
+                        actionsList.appendChild(card);
+                        console.log(`Actions page karta ${index + 1} vytvorená`);
+                    });
+                } else {
+                    actionsList.innerHTML = '<p class="no-actions">Žiadne akcie.</p>';
+                }
+                
+            } catch (err) {
+                console.error('Test neúspešný:', err);
+                statusDiv.innerHTML = `<span class="error">❌ Chyba: ${err.message}</span>`;
+            }
+        }
+        
+        // Run test when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, starting test...');
+            testActions();
+        });
+    </script>
+</body>
+</html>
