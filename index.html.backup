@@ -6,7 +6,7 @@
   <title>U Dvou Šerifů</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png">
-  <link rel="stylesheet" href="styles/styles.css">
+  <link rel="stylesheet" href="styles/styles.css?v=20251024130000">
   <script src="/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
@@ -41,19 +41,28 @@
   <body>
     <header class="site-header">
       <div class="container header-inner">
-  <a class="brand" href="/">
+  <a class="brand" href="index.html">
           <img src="assets/logo.png" alt="U Dvou Šerifů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
           <span class="brand-text">U Dvou Šerifů</span>
         </a>
         <nav class="nav" id="nav">
-          <a href="/">Domov</a>
-          <a href="/menu">Menu</a>
-          <a href="/akcie">Akcie</a>
-          <a href="/rezervace">Rezervacie</a>
-          <a href="/galeria">Galerie</a>
-          <a href="/recenzie">Recenzie</a>
-          <a href="/about">O nás</a>
-          <a href="/kontakt">Kontakt</a>
+          <a href="index.html">Domů</a>
+          <a href="menu.html">Menu</a>
+          <a href="akcie.html">Akce</a>
+          <a href="rezervace.html">Rezervace</a>
+          <a href="galeria.html">Galerie</a>
+          <a href="about.html">O nás</a>
+          <a href="kontakt.html">Kontakt</a>
+          <div class="language-switcher">
+            <a href="index.html" class="lang-btn active">
+              <span class="lang-flag">🇨🇿</span>
+              <span>CZ</span>
+            </a>
+            <a href="sk-index.html" class="lang-btn">
+              <span class="lang-flag">🇸🇰</span>
+              <span>SK</span>
+            </a>
+          </div>
         </nav>
         <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
       </div>
@@ -62,9 +71,9 @@
     <main>
       <section class="hero">
         <div class="container">
-          <h1>Vítejte v restauraci U Dvou Šerifů</h1>
-          <p class="sub">Čistý design, poctivá kuchyně a příjemná atmosféra v centru města.</p>
-          <p class="hero-cta"><a class="btn" href="/menu">Prohlédnout menu</a> <a class="btn ghost" href="redirects/rezervace.html" target="_blank" rel="noopener">Rezervovat stůl</a></p>
+          <h1>Vítejte v hospodě U Dvou Šerifů</h1>
+          <p class="sub">Tady se nemachruje. Tady se jí, pije a drží slovo.</p>
+          <p class="hero-cta"><a class="btn" href="menu.html">Prohlédnout menu</a> <a class="btn ghost" href="redirects/rezervace.html" target="_blank" rel="noopener">Rezervovat stůl</a></p>
         </div>
       </section>
       <!-- O nás sekcia hneď po Vítejte -->
@@ -73,25 +82,31 @@
           <h2>O naší hospodě</h2>
           <div class="about-content">
             <div class="about-text">
-              <p class="lead">U Dvou Šerifů je místo, kde se potkávají dobří lidé při poctivém jídle a skvělé atmosféře. Naše hospoda kombinuje tradiční českou pohostinnost s moderním komfortem.</p>
-              <p>Dva „šerifové" — majitel a obchodní ředitel — se starají o to, aby každý host odcházel spokojený. Ať už přijdete na oběd, večeři nebo jen na pivo s přáteli, najdete u nás teplo domova a kvalitu, na kterou se můžete spolehnout.</p>
-              <a href="/about" class="btn-simple">Více o nás</a>
+              <p class="lead">U Dvou Šerifů je místo, kde se čas zpomalí a poctivé jídlo vládne stejně pevně jako zákon na Divokém západě. Žádné pozlátko, jen poctivá pohostinnost, chuť opravdové kuchyně a atmosféra, kterou dnes už jen tak nenajdete.</p> 
+              <p>Dva „šerifové“ tu osobně dohlížejí na pořádek, kvalitu a spokojenost každého hosta. Ať už dorazíte na poctivý oběd, večerní posezení nebo jen na pivo s přáteli, čeká vás férová chuť a místo, kam se člověk přirozeně chce vracet.</p>
+              <a href="about.html" class="btn-simple">Více o nás</a>
             </div>
             <div class="about-features">
               <div class="feature-item">
                 <span class="feature-icon">🍺</span>
-                <h4>Poctivé pivo</h4>
-                <p>Čerstvě točené české pivo</p>
+                <div class="feature-text">
+                  <h4>Pivo, co má koule</h4>
+                  <p>Pivo čepovaný s respektem. Žádná voda, žádný podvod.</p>
+                </div>
               </div>
               <div class="feature-item">
                 <span class="feature-icon">🍖</span>
-                <h4>Tradiční kuchyně</h4>
-                <p>Domácí jídla podle receptů</p>
+                <div class="feature-text">
+                  <h4>Kuchyně, co se s ničím nemaže</h4>
+                  <p>Porce, co něco vážej. Žádný dekorace — jen poctivej základ a chuť, co má charakter.</p>
+                </div>
               </div>
               <div class="feature-item">
                 <span class="feature-icon">🎵</span>
-                <h4>Živá atmosféra</h4>
-                <p>Pravidelné akce a hudba</p>
+                <div class="feature-text">
+                  <h4>Atmosféra jako ve starým saloonu</h4>
+                  <p>Živá muzika, rachot sklenic a atmosféra, co si nehraje na parádu. Buď to cítíš, nebo ne.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -103,28 +118,28 @@
         <h2>Aktuální akce</h2>
         <div id="homeActionsGrid" class="grid">
           <!-- Actions loaded dynamically from CMS -->
-          <p class="loading-actions">Načítavam akcie...</p>
+          <p class="loading-actions">Načítám akce...</p>
         </div>
         <div class="more">
-          <a href="/akcie" class="btn-simple">Více o akcích</a>
+          <a href="akcie.html" class="btn-simple">Více o akcích</a>
         </div>
       </section>
 
       <!-- Recenzie sekcia -->
       <section class="reviews-section reveal">
         <div class="container">
-          <h2>Co o nás říkají naši hosté</h2>
+          <h2>Tady nemluvíme my. Ať mluví ti, co ochutnali.</h2>
           <div class="reviews-grid" id="homeReviewsGrid">
             <!-- 5-star reviews will be loaded here dynamically -->
             <div class="review-card loading">
               <div class="loading-placeholder">
                 <div class="loading-stars">⭐⭐⭐⭐⭐</div>
-                <p>Načítavam recenzie...</p>
+                <p>Načítám recenzie...</p>
               </div>
             </div>
           </div>
           <div class="reviews-cta">
-            <a href="/recenzie" class="btn btn-outline">Zobrazit všechny recenze</a>
+            <a href="recenzie.html" class="btn btn-outline">Zobrazit všechny recenze</a>
           </div>
         </div>
       </section>
@@ -139,13 +154,13 @@
           </div>
           
           <ul class="footer-links">
-            <li><a href="/">Domů</a></li>
-            <li><a href="/menu">Menu</a></li>
-            <li><a href="/akcie">Akce</a></li>
-            <li><a href="/rezervace">Rezervace</a></li>
-            <li><a href="/galeria">Galerie</a></li>
-            <li><a href="/about">O nás</a></li>
-            <li><a href="/kontakt">Kontakt</a></li>
+            <li><a href="index.html">Domů</a></li>
+            <li><a href="menu.html">Menu</a></li>
+            <li><a href="akcie.html">Akce</a></li>
+            <li><a href="rezervace.html">Rezervace</a></li>
+            <li><a href="galeria.html">Galerie</a></li>
+            <li><a href="about.html">O nás</a></li>
+            <li><a href="kontakt.html">Kontakt</a></li>
           </ul>
 
           <div class="footer-contact">

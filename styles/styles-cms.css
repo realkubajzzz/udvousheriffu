@@ -500,3 +500,23 @@ p{line-height:1.7;margin:12px 0}
     text-align: left;
   }
 }
+
+/* Action texts display in CMS cards */
+.action-texts {
+  margin: 10px 0;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-2);
+}
+
+.action-texts p {
+  margin: 6px 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.action-texts strong {
+  color: var(--warm);
+  font-weight: 600;
+}

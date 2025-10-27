@@ -6,7 +6,7 @@
   <title>Menu — U Dvou Šerifů</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png">
-  <link rel="stylesheet" href="styles/styles.css">
+  <link rel="stylesheet" href="styles/styles.css?v=20251024124614">
   <script src="/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
@@ -23,14 +23,23 @@
         </a>
         
         <nav class="nav" id="nav">
-          <a href="index.html">Domov</a>
+          <a href="index.html">Domů</a>
           <a href="menu.html" class="active">Menu</a>
-          <a href="akcie.html">Akcie</a>
-          <a href="rezervace.html">Rezervacie</a>
+          <a href="akcie.html">Akce</a>
+          <a href="rezervace.html">Rezervace</a>
           <a href="galeria.html">Galerie</a>
-          <a href="recenzie.html">Recenzie</a>
           <a href="about.html">O nás</a>
           <a href="kontakt.html">Kontakt</a>
+          <div class="language-switcher">
+            <a href="menu.html" class="lang-btn active">
+              <span class="lang-flag">🇨🇿</span>
+              <span>CZ</span>
+            </a>
+            <a href="sk-menu.html" class="lang-btn">
+              <span class="lang-flag">🇸🇰</span>
+              <span>SK</span>
+            </a>
+          </div>
         </nav>
         <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
       </div>
@@ -39,7 +48,7 @@
     <main class="container">
       <div class="menu-header reveal">
         <h1>Naše menu</h1>
-        <p class="lead">Prohlédněte si naše pokrmy — pokud chcete rezervovat stůl, prosím využijte náš rezervační kanál.</p>
+        <p class="lead">Toto není nabídka. Toto je duel. Na talíři dostaneš poctivost bez milosti – žádné fotky pro Instagram, jen chuť, co tě buď postaví na nohy… nebo pošle domů přemýšlet, co je skutečné jídlo. Sem nechodí turisté. Sem chodí ti, co vědí, co hledají.</p>
       </div>
 
       <section id="menuGallery" class="menu-showcase reveal">

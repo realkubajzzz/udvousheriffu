@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Galerie — U Dvou Šerifů</title>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+  <link rel="stylesheet" href="styles/styles.css?v=20251024124614">
+  <script src="/supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    if (window.supabase && typeof window.supabase.createClient === 'function') window.createClient = window.supabase.createClient;
+  </script>
+  <script defer src="scripts/main.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="sk-index.html">
+          <img src="assets/logo.png" alt="U Dvou Šerifů logo" class="logo">
+          <span class="brand-text">U Dvou Šerifů</span>
+        </a>
+        
+        <nav class="nav" id="nav">
+          <a href="sk-index.html">Domov</a>
+          <a href="sk-menu.html">Menu</a>
+          <a href="sk-akcie.html">Akcie</a>
+          <a href="sk-rezervace.html">Rezervácie</a>
+          <a href="sk-galeria.html" class="active">Galéria</a>
+          <a href="sk-about.html">O nás</a>
+          <a href="sk-kontakt.html">Kontakt</a>
+          <div class="language-switcher">
+            <a href="galeria.html" class="lang-btn">
+              <span class="lang-flag">🇨🇿</span>
+              <span>CZ</span>
+            </a>
+            <a href="sk-galeria.html" class="lang-btn active">
+              <span class="lang-flag">🇸🇰</span>
+              <span>SK</span>
+            </a>
+          </div>
+        </nav>
+        <button class="nav-toggle" aria-label="Otvoriť menu">☰</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <h1>Život u Dvou Šerifů</h1>
+      <p class="lead reveal">Ak sem vstúpiš, si súčasť deja. A nič z toho sa už nikdy nezmaže. Kliknite na obrázok pre zväčšenie.</p>
+
+      <section class="reveal">
+        <div class="gallery">
+          <!-- Gallery images loaded dynamically from Supabase -->
+          <p class="loading-gallery">Načítavam galériu...</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Lightbox handled by /scripts/main.js -->
+    <div id="lightbox" class="lightbox-overlay" aria-hidden="true">
+      <button id="lightboxClose" class="lightbox-close">✕</button>
+      <img id="lightboxImg" class="lightbox-img" src="" alt="">
+    </div>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <img src="assets/logo.png" alt="U Dvou Šerifů" class="footer-logo">
+            <h4>U Dvou Šerifů</h4>
+          </div>
+          
+          <ul class="footer-links">
+            <li><a href="sk-index.html">Domov</a></li>
+            <li><a href="sk-menu.html">Menu</a></li>
+            <li><a href="sk-akcie.html">Akcie</a></li>
+            <li><a href="sk-rezervace.html">Rezervácie</a></li>
+            <li><a href="sk-galeria.html">Galéria</a></li>
+            <li><a href="sk-recenzie.html">Recenzie</a></li>
+            <li><a href="sk-about.html">O nás</a></li>
+            <li><a href="sk-kontakt.html">Kontakt</a></li>
+          </ul>
+
+          <div class="footer-contact">
+            <p>📍 Panorama Drive, Sandy Shores</p>
+            <p>📞 638 654 405</p>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <p>&copy; 2025 U Dvou Šerifů. Všechna práva vyhrazena.</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

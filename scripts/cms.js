@@ -33,6 +33,17 @@ async function initCMS() {
   // Initialize forms
   setupForms();
   
+  // Restore active tab from URL hash or localStorage
+  restoreActiveTab();
+  
+  // Listen for hash changes to update tab
+  window.addEventListener('hashchange', function() {
+    const hashTab = window.location.hash.substring(1);
+    if (['gallery', 'menu', 'actions', 'reviews', 'audit'].includes(hashTab)) {
+      restoreActiveTab();
+    }
+  });
+  
   // Load initial data
   loadGalleryItems();
   loadMenuItems();
@@ -112,6 +123,12 @@ function showTab(tabName) {
   if (targetPanel) {
     targetPanel.classList.add('active');
     targetPanel.style.display = 'block';
+    
+    // Save current tab to localStorage and URL hash
+    localStorage.setItem('cms_active_tab', tabName);
+    window.location.hash = tabName;
+    
+    console.log(`[CMS] Switched to tab: ${tabName}`);
     
     // Load data when tab is opened
     if (tabName === 'audit') {
@@ -372,81 +389,188 @@ async function addAction() {
   const isEdit = !!editId;
   
   const title = document.getElementById('actionTitle').value.trim();
+  const shortText = document.getElementById('actionShortText').value.trim();
   const description = document.getElementById('actionDescription').value.trim();
   const imageUrl = document.getElementById('actionImageUrl').value.trim();
   const imageBase64 = document.getElementById('actionImageBase64').value.trim();
   const startDate = document.getElementById('actionStartDate').value;
   const isSingleDay = document.getElementById('actionSingleDay').checked;
   const endDate = isSingleDay ? null : document.getElementById('actionEndDate').value;
+  const startTime = document.getElementById('actionStartTime').value;
+  const endTime = document.getElementById('actionEndTime').value;
   
   // Use base64 if available, otherwise use URL
-  const finalImageValue = imageBase64 || imageUrl || null;
+  let finalImageValue = imageBase64 || imageUrl || null;
+  
+  // If base64 is very large, compress it or warn user
+  if (finalImageValue && finalImageValue.startsWith('data:') && finalImageValue.length > 1000000) { // 1MB base64
+    console.warn('Large base64 image detected, size:', finalImageValue.length);
+    showMessage('warning', 'Veľký obrázok môže spôsobiť pomalé ukladanie. Skúste použiť menší obrázok.', 'actionsMessage');
+  }
 
   if (!title) {
     showMessage('error', 'Názov akcie je povinný', 'actionsMessage');
     return;
   }
 
+  if (!shortText) {
+    showMessage('error', 'Krátky text pre homepage je povinný', 'actionsMessage');
+    return;
+  }
+
+  if (shortText.length > 120) {
+    showMessage('error', 'Krátky text nesmie byť dlhší ako 120 znakov', 'actionsMessage');
+    return;
+  }
+
   try {
     let data, error;
     
+    // Add loading state
+    const submitBtn = document.querySelector('#actionsForm button[type="submit"]');
+    const originalText = submitBtn?.textContent;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = isEdit ? 'Aktualizujem...' : 'Pridávam...';
+    }
+    
+    // Create a timeout promise (shorter timeout for faster feedback)
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Operácia trvá príliš dlho. Skúste to znovu.')), 15000); // 15 second timeout instead of 30
+    });
+    
     if (isEdit) {
-      // Update existing action
-      ({ data, error } = await supabaseClient
-        .from('cms_actions')
-        .update({
-          title: title,
-          description: description || null,
-          image_url: finalImageValue,
-          start_date: startDate || null,
-          end_date: endDate || null,
-          updated_by: currentUser?.id || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', editId)
-        .select()
-        .single());
+      // Update existing action with timeout
+      // Split into two operations if image is large
+      const hasLargeImage = finalImageValue && finalImageValue.startsWith('data:') && finalImageValue.length > 500000; // 500KB
       
-      if (error) throw error;
+      if (hasLargeImage) {
+        // First update metadata without image
+        const metadataPromise = supabaseClient
+          .from('cms_actions')
+          .update({
+            title: title,
+            short_text: shortText,
+            description: description || null,
+            start_date: startDate || null,
+            end_date: endDate || null,
+            start_time: startTime || null,
+            end_time: endTime || null,
+            updated_by: currentUser?.id || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editId)
+          .select()
+          .single();
+        
+        ({ data, error } = await Promise.race([metadataPromise, timeoutPromise]));
+        
+        if (error) throw error;
+        
+        // Then update image separately
+        const imagePromise = supabaseClient
+          .from('cms_actions')
+          .update({
+            image_url: finalImageValue,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editId);
+        
+        await Promise.race([imagePromise, timeoutPromise]);
+        
+      } else {
+        // Regular single update
+        const updatePromise = supabaseClient
+          .from('cms_actions')
+          .update({
+            title: title,
+            short_text: shortText,
+            description: description || null,
+            image_url: finalImageValue,
+            start_date: startDate || null,
+            end_date: endDate || null,
+            start_time: startTime || null,
+            end_time: endTime || null,
+            updated_by: currentUser?.id || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editId)
+          .select()
+          .single();
+        
+        ({ data, error } = await Promise.race([updatePromise, timeoutPromise]));
+        
+        if (error) throw error;
+      }
       
       showMessage('success', 'Akcia bola úspešne aktualizovaná', 'actionsMessage');
       
-      // Log activity
-      await logActivity('UPDATE', 'cms_actions', editId, null, { title, description, image_url: finalImageValue });
+      // Log activity (non-blocking)
+      logActivity('UPDATE', 'cms_actions', editId, null, { title, short_text: shortText, description, image_url: finalImageValue })
+        .catch(logErr => console.warn('Logging failed:', logErr));
       
     } else {
-      // Create new action
-      ({ data, error } = await supabaseClient
+      // Create new action with timeout
+      const insertPromise = supabaseClient
         .from('cms_actions')
         .insert({
           title: title,
+          short_text: shortText,
           description: description || null,
           image_url: finalImageValue || null,
           start_date: startDate || null,
           end_date: endDate || null,
+          start_time: startTime || null,
+          end_time: endTime || null,
           is_active: true,
           sort_order: 0,
           created_by: currentUser?.id || null,
           updated_by: currentUser?.id || null
         })
         .select()
-        .single());
+        .single();
+
+      ({ data, error } = await Promise.race([insertPromise, timeoutPromise]));
 
       if (error) throw error;
 
       showMessage('success', 'Akcia bola úspešne pridaná', 'actionsMessage');
       
-      // Log activity
-      await logActivity('CREATE', 'cms_actions', data.id, null, { title, description, image_url: finalImageValue });
+      // Log activity (non-blocking)
+      logActivity('CREATE', 'cms_actions', data.id, null, { title, short_text: shortText, description, image_url: finalImageValue })
+        .catch(logErr => console.warn('Logging failed:', logErr));
     }
 
     // Reset form
     cancelEditAction('Pridať akciu');
     loadActionsItems();
     
+    // Restore button state
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+    
   } catch (err) {
     console.error(`Error ${isEdit ? 'updating' : 'adding'} action:`, err);
-    showMessage('error', `Chyba pri ${isEdit ? 'aktualizácii' : 'pridávaní'} akcie: ` + err.message, 'actionsMessage');
+    
+    // Restore button state
+    const submitBtn = document.querySelector('#actionsForm button[type="submit"]');
+    const originalText = isEdit ? 'Aktualizovať akciu' : 'Pridať akciu';
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+    
+    // Better error messages
+    let errorMessage = err.message;
+    if (err.message.includes('statement timeout')) {
+      errorMessage = 'Operácia trvá príliš dlho. Možno je problém s databázou alebo je obrázok príliš veľký. Skúste znovu alebo použite menší obrázok.';
+    } else if (err.message.includes('Operácia trvá príliš dlho')) {
+      errorMessage = 'Operácia trvá príliš dlho. Skúste to znovu o chvíľu.';
+    }
+    
+    showMessage('error', `Chyba pri ${isEdit ? 'aktualizácii' : 'pridávaní'} akcie: ` + errorMessage, 'actionsMessage');
   }
 }
 
@@ -507,14 +631,21 @@ function createActionItemCard(item) {
     `<img src="${item.image_url}" alt="${item.title}" class="item-image" onerror="this.src='assets/logo.png'">` : '';
   
   const dateRange = (item.start_date || item.end_date) ? 
-    `<p><small>${item.start_date || ''} - ${item.end_date || ''}</small></p>` : '';
+    `<p><small>📅 ${item.start_date || ''} - ${item.end_date || ''}</small></p>` : '';
+  
+  const timeRange = (item.start_time || item.end_time) ? 
+    `<p><small>⏰ ${item.start_time || ''} - ${item.end_time || ''}</small></p>` : '';
   
   card.innerHTML = `
     <div class="drag-handle">⋮⋮ DRAG</div>
     ${imageHTML}
     <h4>${item.title}</h4>
-    <p>${item.description || 'Bez popisu'}</p>
+    <div class="short-text-display">
+      <strong>Homepage text:</strong> ${item.short_text || 'Nie je nastavený'}
+    </div>
+    <p><strong>Detailný popis:</strong> ${item.description || 'Bez popisu'}</p>
     ${dateRange}
+    ${timeRange}
     <div class="status-indicator ${statusClass}">${statusText}</div>
     <p><small>Pridané: ${new Date(item.created_at).toLocaleDateString('sk-SK')}</small></p>
     <div class="item-actions">
@@ -567,10 +698,27 @@ async function editAction(actionId) {
 
     // Fill form with existing data
     document.getElementById('actionTitle').value = data.title || '';
+    document.getElementById('actionShortText').value = data.short_text || '';
     document.getElementById('actionDescription').value = data.description || '';
+    
+    // Update character counter if the function exists
+    if (typeof updateCharacterCount === 'function') {
+      updateCharacterCount();
+    }
     document.getElementById('actionImageUrl').value = data.image_url || '';
     document.getElementById('actionStartDate').value = data.start_date || '';
     document.getElementById('actionEndDate').value = data.end_date || '';
+    document.getElementById('actionStartTime').value = data.start_time || '';
+    document.getElementById('actionEndTime').value = data.end_time || '';
+    
+    // Show time fields if times are set
+    if (data.start_time || data.end_time) {
+      const timeFieldsRow = document.getElementById('timeFieldsRow');
+      const toggleBtn = document.getElementById('timeToggleBtn');
+      timeFieldsRow.style.display = 'flex';
+      toggleBtn.innerHTML = '⏰ Skryť časy';
+      toggleBtn.classList.add('active');
+    }
     
     // Set single day checkbox based on whether end_date exists
     const singleDayCheckbox = document.getElementById('actionSingleDay');
@@ -632,6 +780,15 @@ function cancelEditAction(originalText) {
   document.getElementById('actionSingleDay').checked = false;
   toggleDateFields();
   
+  // Reset time fields
+  const timeFieldsRow = document.getElementById('timeFieldsRow');
+  const toggleBtn = document.getElementById('timeToggleBtn');
+  if (timeFieldsRow && toggleBtn) {
+    timeFieldsRow.style.display = 'none';
+    toggleBtn.innerHTML = '⏰ Pridať časy (voliteľné)';
+    toggleBtn.classList.remove('active');
+  }
+  
   // Reset button text and style
   submitBtn.textContent = originalText || 'Pridať akciu';
   submitBtn.style.background = '';
@@ -678,11 +835,11 @@ function showMessage(type, message, containerId = null) {
     const container = document.getElementById(containerId);
     container.innerHTML = messageHTML;
     
-    // Auto-hide success messages
-    if (type === 'success') {
+    // Auto-hide success and warning messages
+    if (type === 'success' || type === 'warning') {
       setTimeout(() => {
         container.innerHTML = '';
-      }, 3000);
+      }, type === 'warning' ? 5000 : 3000); // Warnings stay longer
     }
   } else {
     // Show global message
@@ -1344,6 +1501,102 @@ function escapeHtml(text) {
     "'": '&#039;'
   };
   return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+// Clean expired sessions periodically
+setInterval(async function() {
+  if (supabaseClient) {
+    try {
+      await supabaseClient.rpc('clean_expired_cms_sessions');
+    } catch (err) {
+      console.error('Error cleaning expired sessions:', err);
+    }
+  }
+}, 30 * 60 * 1000); // Every 30 minutes
+
+// Restore active tab from URL hash or localStorage
+function restoreActiveTab() {
+  let targetTab = 'gallery'; // default
+  
+  // First check URL hash
+  if (window.location.hash) {
+    const hashTab = window.location.hash.substring(1);
+    if (['gallery', 'menu', 'actions', 'reviews', 'audit'].includes(hashTab)) {
+      targetTab = hashTab;
+    }
+  } else {
+    // Then check localStorage
+    const savedTab = localStorage.getItem('cms_active_tab');
+    if (savedTab && ['gallery', 'menu', 'actions', 'reviews', 'audit'].includes(savedTab)) {
+      targetTab = savedTab;
+    }
+  }
+  
+  // Update UI to show correct tab
+  document.querySelectorAll('.cms-tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  document.querySelectorAll('.cms-panel').forEach(panel => {
+    panel.classList.remove('active');
+    panel.style.display = 'none';
+  });
+  
+  // Find and activate the target tab
+  const targetTabButton = document.querySelector(`[onclick="showTab('${targetTab}')"]`);
+  const targetPanel = document.getElementById(`${targetTab}-panel`);
+  
+  if (targetTabButton && targetPanel) {
+    targetTabButton.classList.add('active');
+    targetPanel.classList.add('active');
+    targetPanel.style.display = 'block';
+    
+    // Load specific data if needed
+    if (targetTab === 'audit') {
+      loadAuditLog();
+    } else if (targetTab === 'reviews') {
+      loadReviews();
+      updateReviewsStats();
+    }
+    
+    console.log(`[CMS] Restored tab: ${targetTab}`);
+  }
+}
+
+// Update showTab function to work without event if called programmatically
+function showTabProgrammatically(tabName, clickedElement = null) {
+  // Update tab buttons
+  document.querySelectorAll('.cms-tab').forEach(tab => tab.classList.remove('active'));
+  if (clickedElement) {
+    clickedElement.classList.add('active');
+  } else {
+    const targetTab = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+    if (targetTab) targetTab.classList.add('active');
+  }
+
+  // Update panels
+  document.querySelectorAll('.cms-panel').forEach(panel => {
+    panel.classList.remove('active');
+    panel.style.display = 'none';
+  });
+  
+  const targetPanel = document.getElementById(`${tabName}-panel`);
+  if (targetPanel) {
+    targetPanel.classList.add('active');
+    targetPanel.style.display = 'block';
+    
+    // Save current tab to localStorage and URL hash
+    localStorage.setItem('cms_active_tab', tabName);
+    window.location.hash = tabName;
+    
+    // Load data when tab is opened
+    if (tabName === 'audit') {
+      loadAuditLog();
+    } else if (tabName === 'reviews') {
+      loadReviews();
+      updateReviewsStats();
+    }
+  }
 }
 
 // Clean expired sessions periodically

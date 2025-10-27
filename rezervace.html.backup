@@ -7,7 +7,7 @@
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png">
   <!-- No automatic redirect: page provides manual link to open the reservation channel -->
-  <link rel="stylesheet" href="styles/styles.css">
+  <link rel="stylesheet" href="styles/styles.css?v=20251024124614">
   <script src="/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
@@ -24,14 +24,23 @@
         </a>
         
         <nav class="nav" id="nav">
-          <a href="index.html">Domov</a>
+          <a href="index.html">Domů</a>
           <a href="menu.html">Menu</a>
-          <a href="akcie.html">Akcie</a>
-          <a href="rezervace.html" class="active">Rezervacie</a>
+          <a href="akcie.html">Akce</a>
+          <a href="rezervace.html" class="active">Rezervace</a>
           <a href="galeria.html">Galerie</a>
-          <a href="recenzie.html">Recenzie</a>
           <a href="about.html">O nás</a>
           <a href="kontakt.html">Kontakt</a>
+          <div class="language-switcher">
+            <a href="rezervace.html" class="lang-btn active">
+              <span class="lang-flag">🇨🇿</span>
+              <span>CZ</span>
+            </a>
+            <a href="sk-rezervace.html" class="lang-btn">
+              <span class="lang-flag">🇸🇰</span>
+              <span>SK</span>
+            </a>
+          </div>
         </nav>
         <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
       </div>
@@ -39,7 +48,7 @@
 
     <main class="container">
       <h1>Rezervace</h1>
-  <p class="lead reveal">Pro rezervace použíjte náš rezervační kanál — otevřete ho ručně pomocí tlačítka níže.</p>
+  <p class="lead reveal">Pokud se chceš posadit bez boje o stůl, přejdi na rezervační kanál přes tlačítko níže.</p>
 
       <section class="reveal">
         <div class="card">

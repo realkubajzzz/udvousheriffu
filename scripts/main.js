@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
       nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
     });
   });
+  
+  // Initialize action modal
+  initActionModal();
 
   // Reveal on scroll
   const observer = new IntersectionObserver((entries)=>{
@@ -712,14 +715,14 @@ function createHomeActionCard(action) {
   const statusInfo = getActionStatus(action);
   
   const dateRange = (action.start_date || action.end_date) ? 
-    `<p class="card-date">${formatDateRange(action.start_date, action.end_date)}</p>` : '';
+    `<p class="card-date">${formatDateRange(action.start_date, action.end_date, action.start_time, action.end_time)}</p>` : '';
   
   const cardHTML = `
     <div class="status-indicator ${statusInfo.class}">${statusInfo.text}</div>
     <div class="card-content">
       <div class="card-text">
         <h4>${action.title || 'Bez názvu'} <span class="click-hint">→</span></h4>
-        <p>${action.description || 'Bez popisu'}</p>
+        <p>${action.short_text || action.description || 'Bez popisu'}</p>
         ${dateRange}
       </div>
     </div>
@@ -736,6 +739,7 @@ function createFullActionCard(action) {
   
   const card = document.createElement('article');
   card.className = 'action-card reveal visible';
+  card.style.cursor = 'pointer';
   
   // Calculate status and days
   const statusInfo = getActionStatus(action);
@@ -746,7 +750,7 @@ function createFullActionCard(action) {
   
   const dateRange = (action.start_date || action.end_date) ? 
     `<div class="date-status-row">
-      <span class="action-date">${formatDateRange(action.start_date, action.end_date)}</span>
+      <span class="action-date">${formatDateRange(action.start_date, action.end_date, action.start_time, action.end_time)}</span>
       <div class="status-indicator ${statusInfo.class}">${statusInfo.text}</div>
     </div>` : 
     `<div class="date-status-row">
@@ -764,6 +768,12 @@ function createFullActionCard(action) {
   `;
   
   card.innerHTML = cardHTML;
+  
+  // Add click event to open modal
+  card.addEventListener('click', () => {
+    openActionModal(action);
+  });
+  
   console.log('[DEBUG] Full card HTML:', cardHTML);
   
   return card;
@@ -840,22 +850,43 @@ function sortActionsByStatus(actions) {
   });
 }
 
-function formatDateRange(startDate, endDate) {
+function formatDateRange(startDate, endDate, startTime, endTime) {
   const options = { day: 'numeric', month: 'numeric', year: 'numeric' };
+  
+  let dateText = '';
   
   if (startDate && endDate) {
     const start = new Date(startDate).toLocaleDateString('cs-CZ', options);
     const end = new Date(endDate).toLocaleDateString('cs-CZ', options);
-    return `${start} - ${end}`;
+    dateText = `${start} - ${end}`;
   } else if (startDate && !endDate) {
     // Single day event
-    return new Date(startDate).toLocaleDateString('cs-CZ', options);
+    dateText = new Date(startDate).toLocaleDateString('cs-CZ', options);
   } else if (startDate) {
-    return `Od ${new Date(startDate).toLocaleDateString('cs-CZ', options)}`;
+    dateText = `Od ${new Date(startDate).toLocaleDateString('cs-CZ', options)}`;
   } else if (endDate) {
-    return `Do ${new Date(endDate).toLocaleDateString('cs-CZ', options)}`;
+    dateText = `Do ${new Date(endDate).toLocaleDateString('cs-CZ', options)}`;
   }
-  return '';
+  
+  // Add time if available
+  if (startTime || endTime) {
+    // Format time to remove seconds (HH:MM:SS -> HH:MM)
+    const formatTime = (timeStr) => {
+      if (!timeStr) return '';
+      return timeStr.substring(0, 5); // Take only HH:MM part
+    };
+    
+    const formattedStartTime = formatTime(startTime);
+    const formattedEndTime = formatTime(endTime);
+    
+    const timeText = (formattedStartTime && formattedEndTime) ? 
+      `${formattedStartTime} - ${formattedEndTime}` : 
+      (formattedStartTime ? `od ${formattedStartTime}` : `do ${formattedEndTime}`);
+    
+    dateText += dateText ? ` • ${timeText}` : timeText;
+  }
+  
+  return dateText;
 }
 
 // Load actions from Supabase CMS
@@ -1169,4 +1200,90 @@ function closeLightbox() {
   
   // Restore body scroll
   document.body.style.overflow = '';
+}
+
+// ===== ACTION MODAL FUNCTIONS =====
+
+// Open action modal with detailed view
+function openActionModal(action) {
+  const modal = document.getElementById('actionModal');
+  const modalBody = document.getElementById('actionModalBody');
+  
+  if (!modal || !modalBody) {
+    console.error('[MODAL] Modal elements not found');
+    return;
+  }
+  
+  // Calculate status info
+  const statusInfo = getActionStatus(action);
+  
+  // Create modal content
+  const imageHTML = action.image_url ? 
+    `<img src="${action.image_url}" alt="${action.title}" class="action-modal-image">` : 
+    '<div class="action-modal-image placeholder">Bez obrázku</div>';
+  
+  const dateHTML = (action.start_date || action.end_date) ? 
+    `<div class="action-modal-date">${formatDateRange(action.start_date, action.end_date, action.start_time, action.end_time)}</div>` : '';
+  
+  const shortTextHTML = action.short_text ? 
+    `<div class="action-modal-short-text">${action.short_text}</div>` : '';
+  
+  modalBody.innerHTML = `
+    ${imageHTML}
+    <div class="action-modal-detail">
+      <div class="action-modal-header">
+        <h2 class="action-modal-title">${action.title || 'Bez názvu'}</h2>
+        <div class="action-modal-meta">
+          ${dateHTML}
+          <div class="action-modal-status ${statusInfo.class}">${statusInfo.text}</div>
+        </div>
+      </div>
+      ${shortTextHTML}
+      <div class="action-modal-description">${action.description || 'Bez popisu'}</div>
+    </div>
+  `;
+  
+  // Show modal with animation
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  
+  console.log('[MODAL] Opened modal for action:', action.title);
+}
+
+// Close action modal
+function closeActionModal() {
+  const modal = document.getElementById('actionModal');
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    console.log('[MODAL] Closed action modal');
+  }
+}
+
+// Initialize modal event listeners
+function initActionModal() {
+  const modal = document.getElementById('actionModal');
+  const closeBtn = modal?.querySelector('.action-modal-close');
+  const overlay = modal?.querySelector('.action-modal-overlay');
+  
+  if (!modal) return;
+  
+  // Close button
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeActionModal);
+  }
+  
+  // Overlay click
+  if (overlay) {
+    overlay.addEventListener('click', closeActionModal);
+  }
+  
+  // Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+      closeActionModal();
+    }
+  });
+  
+  console.log('[MODAL] Action modal initialized');
 }

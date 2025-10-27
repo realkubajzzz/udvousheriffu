@@ -137,6 +137,21 @@
         background: #dc3545;
         color: white;
       }
+      .btn-outline {
+        background: transparent;
+        color: var(--accent);
+        border: 2px solid var(--accent);
+        font-weight: 500;
+      }
+      .btn-outline:hover {
+        background: var(--accent);
+        color: white;
+        transform: translateY(-1px);
+      }
+      .btn-outline.active {
+        background: var(--accent);
+        color: white;
+      }
       .btn:hover {
         opacity: 0.9;
         transform: translateY(-1px);
@@ -157,11 +172,35 @@
         gap: 1rem;
         margin-top: 1rem;
       }
+      @media (max-width: 640px) {
+        .items-grid {
+          grid-template-columns: 1fr;
+          gap: 0.8rem;
+        }
+      }
       .item-card {
         border: 1px solid var(--border);
         border-radius: 8px;
         padding: 1rem;
         background: white;
+        overflow: hidden;
+        word-wrap: break-word;
+        box-sizing: border-box;
+      }
+      .item-card h4,
+      .item-card p {
+        margin: 0 0 0.5rem 0;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+      .item-card .short-text-display {
+        background: rgba(122, 79, 46, 0.1);
+        padding: 0.5rem;
+        border-radius: 4px;
+        border-left: 3px solid var(--warm, #7a4f2e);
+        font-size: 0.9rem;
+        margin: 0.5rem 0;
+        word-wrap: break-word;
       }
       .item-image {
         width: 100%;
@@ -174,6 +213,24 @@
         display: flex;
         gap: 0.5rem;
         margin-top: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .item-actions .btn {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-width: fit-content;
+      }
+      @media (max-width: 768px) {
+        .item-actions {
+          gap: 0.4rem;
+        }
+        .item-actions .btn {
+          font-size: 0.8rem;
+          padding: 0.4rem 0.6rem;
+        }
       }
       .status-indicator {
         display: inline-block;
@@ -204,6 +261,11 @@
         background: #f8d7da;
         color: #721c24;
         border: 1px solid #f5c6cb;
+      }
+      .message.warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
       }
       .message.info {
         background: #d1ecf1;
@@ -564,8 +626,13 @@
               <input type="text" id="actionTitle" class="form-input" required placeholder="Špeciálna ponuka">
             </div>
             <div class="form-group">
-              <label>Popis:</label>
-              <textarea id="actionDescription" class="form-textarea" placeholder="Detailný popis akcie..."></textarea>
+              <label>Krátky text pre homepage (max. 120 znakov):</label>
+              <textarea id="actionShortText" class="form-textarea" maxlength="120" placeholder="Krátky popis pre zobrazenie na úvodnej stránke..." style="height: 60px;" oninput="updateCharacterCount()"></textarea>
+              <small class="form-help">📝 Tento text sa zobrazí na úvodnej stránke. Odporúčame 80-120 znakov pre najlepší výsledok. <span id="charCount">0/120</span></small>
+            </div>
+            <div class="form-group">
+              <label>Detailný popis:</label>
+              <textarea id="actionDescription" class="form-textarea" placeholder="Detailný popis akcie pre stránku akcií..."></textarea>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -597,6 +664,25 @@
                 <input type="date" id="actionEndDate" class="form-input">
               </div>
             </div>
+            
+            <!-- Optional time settings -->
+            <div class="form-group">
+              <button type="button" class="btn btn-outline" onclick="toggleTimeFields()" id="timeToggleBtn">
+                ⏰ Pridať časy (voliteľné)
+              </button>
+            </div>
+            
+            <div class="form-row" id="timeFieldsRow" style="display: none;">
+              <div class="form-group">
+                <label>Čas začiatku:</label>
+                <input type="time" id="actionStartTime" class="form-input" placeholder="09:00">
+              </div>
+              <div class="form-group">
+                <label>Čas konca:</label>
+                <input type="time" id="actionEndTime" class="form-input" placeholder="22:00">
+              </div>
+            </div>
+            
             <button type="submit" class="btn btn-primary">Pridať akciu</button>
           </form>
           <div id="actionsMessage"></div>
@@ -735,18 +821,30 @@
         
         // Convert file to base64 and save to hidden base64 field
         const reader2 = new FileReader();
-        reader2.onload = function(e) {
-          const base64Data = e.target.result;
+        reader2.onload = async function(e) {
+          let base64Data = e.target.result;
+          
+          // Compress image if it's too large
+          if (file.size > 2 * 1024 * 1024) { // If larger than 2MB, compress
+            try {
+              preview.innerHTML += '<div class="upload-progress">⚡ Komprimujem obrázok...</div>';
+              base64Data = await compressImage(base64Data, 0.7); // Compress to 70% quality
+              console.log('Image compressed from', file.size, 'to approximately', Math.round(base64Data.length * 0.75), 'bytes');
+            } catch (compressError) {
+              console.warn('Image compression failed, using original:', compressError);
+            }
+          }
           
           // Clear URL field and set base64 field
           document.getElementById(targetUrlInputId).value = '';
           const base64FieldId = targetUrlInputId.replace('Url', 'Base64');
           document.getElementById(base64FieldId).value = base64Data;
           
+          const finalSizeKB = Math.round(base64Data.length * 0.75 / 1024);
           preview.innerHTML = `
             <img src="${base64Data}" alt="Nahraný súbor">
             <div class="image-preview-info">
-              ✅ Súbor pripravený na uloženie • ${file.name} • ${(file.size/1024/1024).toFixed(1)}MB
+              ✅ Súbor pripravený na uloženie • ${file.name} • ${finalSizeKB}KB
             </div>
           `;
         };
@@ -756,6 +854,46 @@
         console.error('File processing error:', error);
         preview.innerHTML += '<div class="upload-progress" style="background:#ffebee;color:#c62828;">❌ Chyba pri spracovaní súboru.</div>';
       }
+    }
+
+    // Image compression function
+    function compressImage(base64String, quality = 0.7) {
+      return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = function() {
+          // Calculate new dimensions (max 1200px width/height)
+          const maxSize = 1200;
+          let { width, height } = this;
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = height * (maxSize / width);
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = width * (maxSize / height);
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress
+          ctx.drawImage(this, 0, 0, width, height);
+          
+          // Get compressed base64
+          const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedBase64);
+        };
+        
+        img.onerror = () => reject(new Error('Failed to load image for compression'));
+        img.src = base64String;
+      });
     }
 
     // Toggle date fields based on single day checkbox
@@ -789,6 +927,53 @@
         }
       }
     }
+
+    // Character counter for short text
+    function updateCharacterCount() {
+      const shortTextArea = document.getElementById('actionShortText');
+      const charCountSpan = document.getElementById('charCount');
+      const currentLength = shortTextArea.value.length;
+      
+      charCountSpan.textContent = `${currentLength}/120`;
+      
+      // Change color based on length
+      if (currentLength > 100) {
+        charCountSpan.style.color = '#dc2626'; // Red when approaching limit
+      } else if (currentLength > 80) {
+        charCountSpan.style.color = '#d97706'; // Orange when getting close
+      } else {
+        charCountSpan.style.color = '#16a34a'; // Green when optimal
+      }
+    }
+
+    // Toggle time fields
+    function toggleTimeFields() {
+      const timeFieldsRow = document.getElementById('timeFieldsRow');
+      const toggleBtn = document.getElementById('timeToggleBtn');
+      const startTimeInput = document.getElementById('actionStartTime');
+      const endTimeInput = document.getElementById('actionEndTime');
+      
+      if (timeFieldsRow.style.display === 'none' || timeFieldsRow.style.display === '') {
+        // Show time fields
+        timeFieldsRow.style.display = 'flex';
+        toggleBtn.innerHTML = '⏰ Skryť časy';
+        toggleBtn.classList.add('active');
+        
+        // Set default times if empty
+        if (!startTimeInput.value) startTimeInput.value = '09:00';
+        if (!endTimeInput.value) endTimeInput.value = '22:00';
+      } else {
+        // Hide time fields
+        timeFieldsRow.style.display = 'none';
+        toggleBtn.innerHTML = '⏰ Pridať časy (voliteľné)';
+        toggleBtn.classList.remove('active');
+        
+        // Clear time values when hiding
+        startTimeInput.value = '';
+        endTimeInput.value = '';
+      }
+    }
+
     </script>
   </body>
 </html>

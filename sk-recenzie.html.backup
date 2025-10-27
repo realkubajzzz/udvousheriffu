@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recenze - U Dvou Šerifů</title>
+    <link rel="stylesheet" href="styles/styles.css?v=20251024124614">
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+</head>
+<body class="reviews-page">
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" href="sk-index.html">
+                <img src="assets/logo.png" alt="U Dvou Šerifů logo" class="logo" onerror="this.style.display='inline-block';this.nextElementSibling.style.display='inline-block'">
+                <span class="brand-text">U Dvou Šerifů</span>
+            </a>
+            <nav class="nav" id="nav">
+                <a href="sk-index.html">Domov</a>
+                <a href="sk-menu.html">Menu</a>
+                <a href="sk-akcie.html">Akcie</a>
+                <a href="sk-rezervace.html">Rezervácie</a>
+                <a href="sk-galeria.html">Galéria</a>
+                <a href="sk-about.html">O nás</a>
+                <a href="sk-kontakt.html">Kontakt</a>
+            </nav>
+            <div class="language-switcher">
+              <a href="recenzie.html" class="lang-btn">
+                <span class="lang-flag">🇨🇿</span>
+                <span>CZ</span>
+              </a>
+              <a href="sk-recenzie.html" class="lang-btn active">
+                <span class="lang-flag">🇸🇰</span>
+                <span>SK</span>
+              </a>
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Otvoriť menu">☰</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero-section reveal">
+            <div class="hero-content">
+                <h1>Recenzie našich hostí</h1>
+                <p>Čo hovoria naši spokojní hostia o našej reštaurácii</p>
+            </div>
+        </section>
+
+        <!-- Reviews Section -->
+        <section class="reviews-section reveal">
+        <div class="container">
+            <div class="section-header">
+                <h2>Všetky recenzie</h2>
+                <div class="reviews-stats">
+                    <div class="average-rating">
+                        <div class="rating-number">
+                            <span id="averageRating">0.0</span>
+                            <div class="stars" id="averageStars"></div>
+                        </div>
+                        <p>Celkové hodnotenie z <span id="totalReviews">0</span> recenzií</p>
+                    </div>
+                    <div class="rating-filter">
+                        <label for="ratingFilter">Filtrovať podľa hodnotenia:</label>
+                        <select id="ratingFilter">
+                            <option value="all">Všetky hodnotenia</option>
+                            <option value="5">5 hviezdičiek</option>
+                            <option value="4">4 hviezdičky</option>
+                            <option value="3">3 hviezdičky</option>
+                            <option value="2">2 hviezdičky</option>
+                            <option value="1">1 hvězdička</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reviews-grid" id="reviewsContainer">
+                <!-- Reviews will be loaded here -->
+            </div>
+
+            <div class="load-more-container">
+                <button id="loadMoreBtn" class="btn btn-primary" style="display: none;">
+                    Načítať viac recenzií
+                </button>
+            </div>
+        </div>
+    </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="assets/logo.png" alt="U Dvou Šerifů" class="footer-logo">
+                    <h4>U Dvou Šerifů</h4>
+                </div>
+                
+                <ul class="footer-links">
+                    <li><a href="sk-index.html">Domov</a></li>
+                    <li><a href="sk-menu.html">Menu</a></li>
+                    <li><a href="sk-akcie.html">Akcie</a></li>
+                    <li><a href="sk-rezervace.html">Rezervácie</a></li>
+                    <li><a href="sk-galeria.html">Galéria</a></li>
+                    <li><a href="sk-about.html">O nás</a></li>
+                    <li><a href="sk-kontakt.html">Kontakt</a></li>
+                </ul>
+
+                <div class="footer-contact">
+                    <p>📍 Panorama Drive, Sandy Shores</p>
+                    <p>📞 638 654 405</p>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2025 U Dvou Šerifů. Všechna práva vyhrazena.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="scripts/reviews.js"></script>
+    <script src="scripts/main.js"></script>
+</body>
+</html>

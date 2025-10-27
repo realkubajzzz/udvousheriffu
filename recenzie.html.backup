@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recenze - U Dvou Šerifů</title>
-    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/styles.css?v=20251024124614">
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png">
 </head>
@@ -16,15 +16,24 @@
                 <span class="brand-text">U Dvou Šerifů</span>
             </a>
             <nav class="nav" id="nav">
-                <a href="index.html">Domov</a>
+                <a href="index.html">Domů</a>
                 <a href="menu.html">Menu</a>
-                <a href="akcie.html">Akcie</a>
-                <a href="rezervace.html">Rezervacie</a>
+                <a href="akcie.html">Akce</a>
+                <a href="rezervace.html">Rezervace</a>
                 <a href="galeria.html">Galerie</a>
-                <a href="recenzie.html" class="active">Recenzie</a>
                 <a href="about.html">O nás</a>
                 <a href="kontakt.html">Kontakt</a>
             </nav>
+            <div class="language-switcher">
+              <a href="recenzie.html" class="lang-btn active">
+                <span class="lang-flag">🇨🇿</span>
+                <span>CZ</span>
+              </a>
+              <a href="sk-recenzie.html" class="lang-btn">
+                <span class="lang-flag">🇸🇰</span>
+                <span>SK</span>
+              </a>
+            </div>
             <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
         </div>
     </header>

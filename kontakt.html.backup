@@ -6,7 +6,7 @@
   <title>Kontakt — U Dvou Šerifů</title>
     <link rel="icon" type="image/png" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png">
-  <link rel="stylesheet" href="styles/styles.css">
+  <link rel="stylesheet" href="styles/styles.css?v=20251024124614">
   <script src="/supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
@@ -23,14 +23,23 @@
         </a>
         
         <nav class="nav" id="nav">
-          <a href="index.html">Domov</a>
+          <a href="index.html">Domů</a>
           <a href="menu.html">Menu</a>
-          <a href="akcie.html">Akcie</a>
-          <a href="rezervace.html">Rezervacie</a>
+          <a href="akcie.html">Akce</a>
+          <a href="rezervace.html">Rezervace</a>
           <a href="galeria.html">Galerie</a>
-          <a href="recenzie.html">Recenzie</a>
           <a href="about.html">O nás</a>
           <a href="kontakt.html" class="active">Kontakt</a>
+          <div class="language-switcher">
+            <a href="kontakt.html" class="lang-btn active">
+              <span class="lang-flag">🇨🇿</span>
+              <span>CZ</span>
+            </a>
+            <a href="sk-kontakt.html" class="lang-btn">
+              <span class="lang-flag">🇸🇰</span>
+              <span>SK</span>
+            </a>
+          </div>
         </nav>
         <button class="nav-toggle" id="navToggle" aria-label="Otevřít menu">☰</button>
       </div>
@@ -47,7 +56,7 @@
           <p><strong>E-mail:</strong> <span class="contact-info">pearce.aiden@ls.com</span></p>
           
           <h3>Obchodný riaditeľ</h3>
-          <p><strong>Telefón:</strong> <span class="contact-info">950 873 776</span></p>
+          <p><strong>Telefon:</strong> <span class="contact-info">950 873 776</span></p>
           <p><strong>E-mail:</strong> <span class="contact-info">sinns.andrew@ls.com</span></p>
           
           <h3>Rezervace</h3>
